@@ -1,97 +1,173 @@
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
-import { authApi, userApi, ApiResponse } from '../services/api';
-import { UserRecord } from '../services/database';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { httpClient } from '../services/http';
+import { loginUser, logoutUser, registerUser, validateAuthToken, type AuthUser } from '../services/authApi';
+
+export interface AuthenticatedUser extends AuthUser {
+  name: string;
+  balance: number;
+}
 
 interface AuthContextType {
-  user: UserRecord | null;
+  user: AuthenticatedUser | null;
   token: string | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<ApiResponse>;
-  register: (name: string, email: string, password: string) => Promise<ApiResponse>;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
+  register: (name: string, email: string, password: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  validateToken: () => Promise<boolean>;
   updateBalance: (amount: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function mapAuthenticatedUser(user: AuthUser): AuthenticatedUser {
+  return {
+    ...user,
+    id: String(user.id),
+    name: user.username,
+    balance: 10000,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserRecord | null>(null);
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Recuperar sessão ao carregar
-  useEffect(() => {
-    const restore = async () => {
-      const storedToken = localStorage.getItem('cn_token');
-      if (storedToken) {
-        const result = await authApi.validateSession(storedToken);
-        if (result.success && result.data) {
-          setUser(result.data);
-          setToken(storedToken);
-        } else {
-          localStorage.removeItem('cn_token');
-        }
-      }
-      setIsLoading(false);
-    };
-    restore();
+  const validateToken = useCallback(async () => {
+    const storedToken = httpClient.getAuthToken();
+
+    if (!storedToken) {
+      setUser(null);
+      setToken(null);
+      return false;
+    }
+
+    const result = await validateAuthToken();
+
+    if (result.success && result.data?.user) {
+      setUser(mapAuthenticatedUser(result.data.user));
+      setToken(storedToken);
+      return true;
+    }
+
+    httpClient.setAuthToken(null);
+    setUser(null);
+    setToken(null);
+    return false;
   }, []);
 
+  useEffect(() => {
+    const restore = async () => {
+      setIsLoading(true);
+      await validateToken();
+      setIsLoading(false);
+    };
+
+    void restore();
+  }, [validateToken]);
+
   const login = useCallback(async (email: string, password: string) => {
-    const result = await authApi.login(email, password);
-    if (result.success && result.data) {
-      setUser(result.data.user);
+    const result = await loginUser(email, password);
+
+    if (result.success && result.data?.user && result.data?.token) {
+      httpClient.setAuthToken(result.data.token);
       setToken(result.data.token);
-      localStorage.setItem('cn_token', result.data.token);
+      setUser(mapAuthenticatedUser(result.data.user));
+
+      return {
+        success: true,
+        message: 'Login realizado com sucesso',
+      };
     }
-    return result;
+
+    return {
+      success: false,
+      error: result.error || 'Falha ao autenticar o usuário',
+    };
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const result = await authApi.register(name, email, password);
-    if (result.success && result.data) {
-      setUser(result.data.user);
+    const result = await registerUser(name, email, password);
+
+    if (result.success && result.data?.user && result.data?.token) {
+      httpClient.setAuthToken(result.data.token);
       setToken(result.data.token);
-      localStorage.setItem('cn_token', result.data.token);
+      setUser(mapAuthenticatedUser(result.data.user));
+
+      return {
+        success: true,
+        message: 'Cadastro realizado com sucesso',
+      };
     }
-    return result;
+
+    return {
+      success: false,
+      error: result.error || 'Falha ao registrar o usuário',
+    };
   }, []);
 
   const logout = useCallback(async () => {
-    if (token) {
-      await authApi.logout(token);
+    try {
+      await logoutUser();
+    } catch {
+      // O logout é seguro mesmo se o endpoint não responder rapidamente.
     }
+
+    httpClient.setAuthToken(null);
     setUser(null);
     setToken(null);
-    localStorage.removeItem('cn_token');
-  }, [token]);
+  }, []);
 
   const refreshUser = useCallback(async () => {
-    if (!user) return;
-    const result = await userApi.getProfile(user.id);
-    if (result.success && result.data) {
-      setUser(result.data);
-    }
-  }, [user]);
+    await validateToken();
+  }, [validateToken]);
 
   const updateBalance = useCallback(async (amount: number) => {
-    if (!user) return;
-    const result = await userApi.updateBalance(user.id, amount);
-    if (result.success && result.data) {
-      setUser(result.data);
+    if (!user) {
+      return;
     }
+
+    setUser((currentUser) => {
+      if (!currentUser) {
+        return currentUser;
+      }
+
+      return {
+        ...currentUser,
+        balance: Math.max(0, currentUser.balance + amount),
+      };
+    });
   }, [user]);
 
-  return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout, refreshUser, updateBalance }}>
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      isLoading,
+      isAuthenticated: Boolean(user && token),
+      login,
+      register,
+      logout,
+      refreshUser,
+      validateToken,
+      updateBalance,
+    }),
+    [isLoading, login, logout, refreshUser, token, updateBalance, user, validateToken]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+
+  if (!ctx) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+
   return ctx;
 }
+

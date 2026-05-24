@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, TrendingUp, DollarSign, BarChart3, Shield } from 'lucide-react';
@@ -6,7 +7,7 @@ import { Eye, EyeOff, Mail, Lock, User as UserIcon, TrendingUp, DollarSign, BarC
 type Mode = 'login' | 'register';
 
 export function AuthPage() {
-  const { login, register } = useAuth();
+  const { login, register, user } = useAuth();
   const notify = useNotification();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
@@ -16,6 +17,10 @@ export function AuthPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  if (user) {
+    return <Navigate to="/portfolio" replace />;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -23,24 +28,29 @@ export function AuthPage() {
     try {
       if (mode === 'login') {
         const result = await login(email, password);
+
         if (result.success) {
-          notify.success('Bem-vindo de volta!', `Olá, faça bom proveito`);
-          setTimeout(() => window.location.href = '/portfolio', 500);
+          notify.success('Bem-vindo de volta!', 'Sessão validada com segurança no backend PHP.');
+          window.location.href = '/portfolio';
         } else {
-          notify.error('Erro no login', result.error);
+          notify.error('Erro no login', result.error || 'Não foi possível autenticar.');
         }
+
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        notify.error('Erro', 'As senhas não coincidem');
+        return;
+      }
+
+      const result = await register(name, email, password);
+
+      if (result.success) {
+        notify.success('Conta criada! 🎉', 'Seu acesso foi configurado no backend PHP e o token JWT foi salvo na sessão atual.');
+        window.location.href = '/portfolio';
       } else {
-        if (password !== confirmPassword) {
-          notify.error('Erro', 'As senhas não coincidem');
-          return;
-        }
-        const result = await register(name, email, password);
-        if (result.success) {
-          notify.success('Conta criada! 🎉', result.message || 'Você ganhou $10.000 de bônus');
-          setTimeout(() => window.location.href = '/portfolio', 500);
-        } else {
-          notify.error('Erro no cadastro', result.error);
-        }
+        notify.error('Erro no cadastro', result.error || 'Não foi possível concluir o cadastro.');
       }
     } finally {
       setIsLoading(false);
@@ -52,19 +62,19 @@ export function AuthPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block">
           <div className="inline-block px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-indigo-400 text-sm font-medium mb-6">
-            Ganhe $10.000 de bônus ao se cadastrar!
+            Autenticação real com PHP + MySQL
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             {mode === 'login' ? 'Bem-vindo de volta!' : 'Crie sua conta'}
           </h1>
           <p className="text-slate-400 text-lg mb-8">
-            Comece a negociar criptomoedas com a plataforma mais completa do mercado.
+            Entre ou cadastre-se com um fluxo seguro, validado no backend e protegido por JWT.
           </p>
 
           <div className="space-y-4">
             <Feature icon={<DollarSign className="w-5 h-5" />} title="Trade com Facilidade" desc="Compre e venda criptomoedas com taxas baixas (0.1%)" />
-            <Feature icon={<BarChart3 className="w-5 h-5" />} title="Dados Persistentes" desc="Seu portfólio salvo em banco de dados seguro" />
-            <Feature icon={<Shield className="w-5 h-5" />} title="Segurança Total" desc="Senhas com hash SHA-256 e autenticação segura" />
+            <Feature icon={<BarChart3 className="w-5 h-5" />} title="Dados Persistentes" desc="Usuário salvo em MySQL com sessão validada pelo backend" />
+            <Feature icon={<Shield className="w-5 h-5" />} title="Segurança Total" desc="JWT, hash de senha e validação server-side" />
           </div>
         </div>
 
@@ -137,11 +147,12 @@ export function AuthPage() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-10 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
                   placeholder="••••••••"
+                  title="Use pelo menos 8 caracteres, incluindo maiúscula, minúscula, número e símbolo."
                 />
                 <button
                   type="button"
@@ -161,7 +172,7 @@ export function AuthPage() {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
-                    minLength={6}
+                    minLength={8}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -198,10 +209,10 @@ export function AuthPage() {
             </p>
 
             {mode === 'register' && (
-              <div className="bg-gradient-to-r from-emerald-500/10 to-indigo-500/10 border border-emerald-500/30 rounded-lg p-3 text-xs text-slate-300">
-                🎁 <strong className="text-emerald-400">Bônus de $10.000</strong> ao criar sua conta!
+              <div className="bg-gradient-to-r from-slate-500/10 to-indigo-500/10 border border-slate-500/30 rounded-lg p-3 text-xs text-slate-300">
+                🔐 <strong className="text-indigo-400">Autenticação real</strong> com PHP + MySQL.
                 <br />
-                <span className="text-slate-400">Use para comprar e vender criptomoedas virtualmente.</span>
+                <span className="text-slate-400">JWT, hash seguro de senha e validação no servidor.</span>
               </div>
             )}
           </form>

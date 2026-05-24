@@ -25,6 +25,7 @@ import { SimulatorPage } from './pages/SimulatorPage';
 import { WhalesPage } from './pages/WhalesPage';
 import { CalendarPage } from './pages/CalendarPage';
 import { AdminPage } from './pages/AdminPage';
+import { ProtectedRoute } from './routes/ProtectedRoute';
 import { useTheme } from './context/ThemeContext';
 
 function AppShell() {
@@ -41,26 +42,26 @@ function AppShell() {
       <Header />
       <main className="flex-1">
         <ErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/coin/:id" element={<CoinDetail />} />
-          <Route path="/converter" element={<Converter />} />
-          <Route path="/watchlist" element={<Watchlist />} />
-          <Route path="/trending" element={<Trending />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/portfolio" element={<PortfolioPage />} />
-          <Route path="/trade/:id" element={<TradePage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/heatmap" element={<HeatmapPage />} />
-          <Route path="/news" element={<NewsPage />} />
-          <Route path="/alerts" element={<AlertsPage />} />
-          <Route path="/compare" element={<ComparePage />} />
-          <Route path="/simulator" element={<SimulatorPage />} />
-          <Route path="/whales" element={<WhalesPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/coin/:id" element={<CoinDetail />} />
+            <Route path="/converter" element={<Converter />} />
+            <Route path="/watchlist" element={<Watchlist />} />
+            <Route path="/trending" element={<Trending />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
+            <Route path="/trade/:id" element={<ProtectedRoute><TradePage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/heatmap" element={<HeatmapPage />} />
+            <Route path="/news" element={<NewsPage />} />
+            <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
+            <Route path="/compare" element={<ComparePage />} />
+            <Route path="/simulator" element={<SimulatorPage />} />
+            <Route path="/whales" element={<WhalesPage />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </ErrorBoundary>
       </main>
       <Footer />
