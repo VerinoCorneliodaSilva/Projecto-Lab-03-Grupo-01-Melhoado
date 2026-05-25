@@ -5,6 +5,7 @@
 
 import { db, UserRecord, SessionRecord, HoldingRecord, TransactionRecord, AlertRecord, WatchlistRecord, LogRecord } from './database';
 import { hashPassword, verifyPassword, generateToken, generateId } from './crypto';
+import { httpClient } from './http';
 
 // === Tipos de Resposta ===
 
@@ -295,182 +296,198 @@ export const userApi = {
 
 // === API de Trading ===
 
+interface BackendHoldingPayload {
+  id: number;
+  userId: number;
+  cryptoId: string;
+  symbol: string;
+  amount: number;
+  avgBuyPrice: number;
+  totalInvested: number;
+  updatedAt: string;
+}
+
+interface BackendTransactionPayload {
+  id: number;
+  userId: number;
+  type: 'buy' | 'sell';
+  cryptoId: string;
+  symbol: string;
+  amount: number;
+  price: number;
+  fee: number;
+  total: number;
+  timestamp: string;
+}
+
+interface BackendSnapshotPayload {
+  id: number;
+  userId: number;
+  cryptoId: string;
+  symbol: string;
+  amount: number;
+  avgBuyPrice: number;
+  totalInvested: number;
+  currentValue: number;
+  snapshotType: string;
+  createdAt: string;
+}
+
+export interface PortfolioSnapshotRecord {
+  id: string;
+  userId: string;
+  cryptoId: string;
+  symbol: string;
+  amount: number;
+  avgBuyPrice: number;
+  totalInvested: number;
+  currentValue: number;
+  snapshotType: string;
+  createdAt: string;
+}
+
+function mapHolding(holding: BackendHoldingPayload): HoldingRecord {
+  return {
+    id: String(holding.id),
+    userId: String(holding.userId),
+    cryptoId: holding.cryptoId,
+    symbol: holding.symbol,
+    amount: Number(holding.amount),
+    avgBuyPrice: Number(holding.avgBuyPrice),
+    totalInvested: Number(holding.totalInvested),
+    updatedAt: holding.updatedAt,
+  };
+}
+
+function mapTransaction(transaction: BackendTransactionPayload): TransactionRecord {
+  return {
+    id: String(transaction.id),
+    userId: String(transaction.userId),
+    type: transaction.type,
+    cryptoId: transaction.cryptoId,
+    symbol: transaction.symbol,
+    amount: Number(transaction.amount),
+    price: Number(transaction.price),
+    total: Number(transaction.total),
+    fee: Number(transaction.fee),
+    timestamp: transaction.timestamp,
+  };
+}
+
+function mapSnapshot(snapshot: BackendSnapshotPayload): PortfolioSnapshotRecord {
+  return {
+    id: String(snapshot.id),
+    userId: String(snapshot.userId),
+    cryptoId: snapshot.cryptoId,
+    symbol: snapshot.symbol,
+    amount: Number(snapshot.amount),
+    avgBuyPrice: Number(snapshot.avgBuyPrice),
+    totalInvested: Number(snapshot.totalInvested),
+    currentValue: Number(snapshot.currentValue),
+    snapshotType: snapshot.snapshotType,
+    createdAt: snapshot.createdAt,
+  };
+}
+
 export const tradeApi = {
   async buy(userId: string, cryptoId: string, symbol: string, amount: number, price: number): Promise<ApiResponse<{ transaction: TransactionRecord; holding: HoldingRecord | null }>> {
-    await simulateNetworkDelay();
-
-    const FEE_RATE = 0.001;
-    const subtotal = amount * price;
-    const fee = subtotal * FEE_RATE;
-    const total = subtotal + fee;
-
-    // Verificar saldo
-    const user = await db.read('users', userId);
-    if (!user) {
-      return { success: false, error: 'Usuário não encontrado' };
-    }
-
-    if (user.balance < total) {
-      return { success: false, error: 'Saldo insuficiente' };
-    }
-
-    if (amount <= 0) {
-      return { success: false, error: 'Quantidade inválida' };
-    }
-
-    // Criar transação
-    const transaction: TransactionRecord = {
-      id: generateId(),
+    const result = await httpClient.post<{
+      transaction?: BackendTransactionPayload;
+      holding?: BackendHoldingPayload | null;
+    }>('/trade/buy', {
       userId,
-      type: 'buy',
       cryptoId,
       symbol,
       amount,
       price,
-      total,
-      fee,
-      timestamp: new Date().toISOString(),
-    };
-
-    await db.create('transactions', transaction);
-
-    // Atualizar ou criar holding
-    const holdings = await db.readByIndex('holdings', 'userId', userId);
-    let holding = holdings.find((h) => h.cryptoId === cryptoId);
-
-    if (holding) {
-      const newAmount = holding.amount + amount;
-      const newTotalInvested = holding.totalInvested + total;
-      holding = {
-        ...holding,
-        amount: newAmount,
-        avgBuyPrice: newTotalInvested / newAmount,
-        totalInvested: newTotalInvested,
-        updatedAt: new Date().toISOString(),
-      };
-      await db.update('holdings', holding);
-    } else {
-      holding = {
-        id: generateId(),
-        userId,
-        cryptoId,
-        symbol,
-        amount,
-        avgBuyPrice: total / amount,
-        totalInvested: total,
-        updatedAt: new Date().toISOString(),
-      };
-      await db.create('holdings', holding);
-    }
-
-    // Atualizar saldo
-    user.balance -= total;
-    user.updatedAt = new Date().toISOString();
-    await db.update('users', user);
-
-    // Log
-    await db.create('logs', {
-      id: generateId(),
-      type: 'trade',
-      userId,
-      action: 'Compra',
-      details: `Comprou ${amount} ${symbol} por $${total.toFixed(2)}`,
-      timestamp: new Date().toISOString(),
     });
 
-    return { 
-      success: true, 
-      data: { transaction, holding },
-      message: `Compra de ${amount} ${symbol} realizada!`
+    if (!result.success) {
+      return { success: false, error: result.error || 'Não foi possível concluir a compra' };
+    }
+
+    const transaction = result.data?.transaction;
+    const holding = result.data?.holding;
+
+    if (!transaction) {
+      return { success: false, error: 'Resposta inválida do servidor' };
+    }
+
+    return {
+      success: true,
+      data: {
+        transaction: mapTransaction(transaction),
+        holding: holding ? mapHolding(holding) : null,
+      },
+      message: `Compra de ${amount} ${symbol} realizada!`,
     };
   },
 
   async sell(userId: string, cryptoId: string, symbol: string, amount: number, price: number): Promise<ApiResponse<{ transaction: TransactionRecord }>> {
-    await simulateNetworkDelay();
-
-    const FEE_RATE = 0.001;
-    const subtotal = amount * price;
-    const fee = subtotal * FEE_RATE;
-    const total = subtotal - fee;
-
-    // Verificar holding
-    const holdings = await db.readByIndex('holdings', 'userId', userId);
-    const holding = holdings.find((h) => h.cryptoId === cryptoId);
-
-    if (!holding || holding.amount < amount) {
-      return { success: false, error: 'Quantidade insuficiente' };
-    }
-
-    if (amount <= 0) {
-      return { success: false, error: 'Quantidade inválida' };
-    }
-
-    // Criar transação
-    const transaction: TransactionRecord = {
-      id: generateId(),
+    const result = await httpClient.post<{
+      transaction?: BackendTransactionPayload;
+    }>('/trade/sell', {
       userId,
-      type: 'sell',
       cryptoId,
       symbol,
       amount,
       price,
-      total,
-      fee,
-      timestamp: new Date().toISOString(),
-    };
-
-    await db.create('transactions', transaction);
-
-    // Atualizar holding
-    const newAmount = holding.amount - amount;
-    if (newAmount < 0.00000001) {
-      await db.delete('holdings', holding.id);
-    } else {
-      const newTotalInvested = (holding.totalInvested / holding.amount) * newAmount;
-      holding.amount = newAmount;
-      holding.totalInvested = newTotalInvested;
-      holding.updatedAt = new Date().toISOString();
-      await db.update('holdings', holding);
-    }
-
-    // Atualizar saldo
-    const user = await db.read('users', userId);
-    if (user) {
-      user.balance += total;
-      user.updatedAt = new Date().toISOString();
-      await db.update('users', user);
-    }
-
-    // Log
-    await db.create('logs', {
-      id: generateId(),
-      type: 'trade',
-      userId,
-      action: 'Venda',
-      details: `Vendeu ${amount} ${symbol} por $${total.toFixed(2)}`,
-      timestamp: new Date().toISOString(),
     });
 
-    return { 
-      success: true, 
-      data: { transaction },
-      message: `Venda de ${amount} ${symbol} realizada!`
+    if (!result.success) {
+      return { success: false, error: result.error || 'Não foi possível concluir a venda' };
+    }
+
+    const transaction = result.data?.transaction;
+
+    if (!transaction) {
+      return { success: false, error: 'Resposta inválida do servidor' };
+    }
+
+    return {
+      success: true,
+      data: { transaction: mapTransaction(transaction) },
+      message: `Venda de ${amount} ${symbol} realizada!`,
     };
   },
 
-  async getHoldings(userId: string): Promise<ApiResponse<HoldingRecord[]>> {
-    await simulateNetworkDelay();
-    const holdings = await db.readByIndex('holdings', 'userId', userId);
-    return { success: true, data: holdings };
+  async getHoldings(_userId: string): Promise<ApiResponse<HoldingRecord[]>> {
+    const result = await httpClient.get<{ holdings?: BackendHoldingPayload[] }>('/trade/holdings');
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Não foi possível carregar holdings' };
+    }
+
+    return {
+      success: true,
+      data: (result.data?.holdings ?? []).map(mapHolding),
+    };
   },
 
-  async getTransactions(userId: string, limit: number = 50): Promise<ApiResponse<TransactionRecord[]>> {
-    await simulateNetworkDelay();
-    const transactions = await db.readByIndex('transactions', 'userId', userId);
-    const sorted = transactions.sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-    return { success: true, data: sorted.slice(0, limit) };
+  async getTransactions(_userId: string): Promise<ApiResponse<TransactionRecord[]>> {
+    const result = await httpClient.get<{ transactions?: BackendTransactionPayload[] }>('/trade/transactions');
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Não foi possível carregar transações' };
+    }
+
+    return {
+      success: true,
+      data: (result.data?.transactions ?? []).map(mapTransaction),
+    };
+  },
+
+  async getPortfolioSnapshots(_userId: string): Promise<ApiResponse<PortfolioSnapshotRecord[]>> {
+    const result = await httpClient.get<{ snapshots?: BackendSnapshotPayload[] }>('/trade/snapshots');
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Não foi possível carregar snapshots' };
+    }
+
+    return {
+      success: true,
+      data: (result.data?.snapshots ?? []).map(mapSnapshot),
+    };
   },
 };
 

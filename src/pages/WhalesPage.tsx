@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { whaleData, onChainStats } from '../data/whalesData';
 import { Fish, ArrowRight, ArrowUpRight, ArrowDownRight, Activity, Database, Cpu, Zap } from 'lucide-react';
 import { useCurrency } from '../context/CurrencyContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export function WhalesPage() {
   const { format } = useCurrency();
+  const { t, formatDateTime, formatNumber } = useLanguage();
   const [tab, setTab] = useState<'whales' | 'onchain'>('whales');
 
   return (
@@ -12,9 +14,9 @@ export function WhalesPage() {
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
           <Fish className="w-8 h-8 text-blue-400" />
-          Whales & On-Chain Analytics
+          {t('whales.title')}
         </h1>
-        <p className="text-slate-400">Monitore grandes movimentações e métricas blockchain em tempo real</p>
+        <p className="text-slate-400">{t('whales.subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -25,7 +27,7 @@ export function WhalesPage() {
             tab === 'whales' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          🐋 Movimentações de Whales
+          {t('whales.moves')}
         </button>
         <button
           onClick={() => setTab('onchain')}
@@ -33,7 +35,7 @@ export function WhalesPage() {
             tab === 'onchain' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          ⛓ Análise On-Chain
+          {t('whales.onChain')}
         </button>
       </div>
 
@@ -41,9 +43,9 @@ export function WhalesPage() {
         <div className="space-y-3">
           {whaleData.map((w) => {
             const typeConfig = {
-              exchange_in: { icon: <ArrowUpRight className="w-4 h-4" />, label: 'Entrada em Exchange', color: 'bg-red-500/10 text-red-400 border-red-500/30' },
-              exchange_out: { icon: <ArrowDownRight className="w-4 h-4" />, label: 'Saída de Exchange', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
-              transfer: { icon: <ArrowRight className="w-4 h-4" />, label: 'Transferência', color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
+              exchange_in: { icon: <ArrowUpRight className="w-4 h-4" />, label: t('whales.exchangeIn'), color: 'bg-red-500/10 text-red-400 border-red-500/30' },
+              exchange_out: { icon: <ArrowDownRight className="w-4 h-4" />, label: t('whales.exchangeOut'), color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' },
+              transfer: { icon: <ArrowRight className="w-4 h-4" />, label: t('whales.transfer'), color: 'bg-blue-500/10 text-blue-400 border-blue-500/30' },
             };
             const cfg = typeConfig[w.type];
             return (
@@ -73,13 +75,13 @@ export function WhalesPage() {
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold text-white">
-                      {w.amount.toLocaleString('pt-BR')} {w.symbol}
+                      {formatNumber(w.amount, { maximumFractionDigits: 0 })} {w.symbol}
                     </div>
                     <div className="text-sm text-slate-400">
                       ≈ {format(w.valueUsd, { compact: true })}
                     </div>
                     <div className="text-xs text-slate-500 mt-1">
-                      {formatTimeAgo(w.timestamp)}
+                      {formatDateTime(w.timestamp)}
                     </div>
                   </div>
                 </div>
@@ -93,25 +95,25 @@ export function WhalesPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <OnChainStat
               icon={<Activity className="w-5 h-5 text-emerald-400" />}
-              label="Endereços Ativos"
-              value={onChainStats.activeAddresses.toLocaleString('pt-BR')}
+              label={t('whales.activeAddresses')}
+              value={formatNumber(onChainStats.activeAddresses, { maximumFractionDigits: 0 })}
               change="+5.2%"
             />
             <OnChainStat
               icon={<Database className="w-5 h-5 text-indigo-400" />}
-              label="Transações 24h"
-              value={onChainStats.transactions24h.toLocaleString('pt-BR')}
+              label={t('whales.transactions24h')}
+              value={formatNumber(onChainStats.transactions24h, { maximumFractionDigits: 0 })}
               change="+12.8%"
             />
             <OnChainStat
               icon={<Zap className="w-5 h-5 text-yellow-400" />}
-              label="Taxas 24h"
+              label={t('whales.totalFees')}
               value={format(onChainStats.totalFees24h, { compact: true })}
               change="-3.4%"
             />
             <OnChainStat
               icon={<Cpu className="w-5 h-5 text-purple-400" />}
-              label="Hash Rate"
+              label={t('whales.hashRate')}
               value={onChainStats.hashRate}
               change="+2.1%"
             />
@@ -119,18 +121,18 @@ export function WhalesPage() {
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-              <h3 className="text-white font-semibold mb-4">Métricas da Rede Bitcoin</h3>
+              <h3 className="text-white font-semibold mb-4">{t('whales.networkMetrics')}</h3>
               <div className="space-y-3">
-                <MetricRow label="Tempo de Bloco" value={`${onChainStats.blockTime} min`} />
-                <MetricRow label="Dificuldade" value={onChainStats.difficulty} />
-                <MetricRow label="Hash Rate" value={onChainStats.hashRate} />
-                <MetricRow label="Mempool" value={`${onChainStats.mempool.toLocaleString('pt-BR')} txs`} />
-                <MetricRow label="Taxa Média" value={`${onChainStats.avgGasPrice} sat/vB`} />
+                <MetricRow label={t('whales.blockTime')} value={`${onChainStats.blockTime} min`} />
+                <MetricRow label={t('whales.difficulty')} value={onChainStats.difficulty} />
+                <MetricRow label={t('whales.hashRate')} value={onChainStats.hashRate} />
+                <MetricRow label={t('whales.mempool')} value={`${formatNumber(onChainStats.mempool, { maximumFractionDigits: 0 })} txs`} />
+                <MetricRow label={t('whales.avgGasPrice')} value={`${onChainStats.avgGasPrice} sat/vB`} />
               </div>
             </div>
 
             <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-              <h3 className="text-white font-semibold mb-4">Top Carteiras Ativas</h3>
+              <h3 className="text-white font-semibold mb-4">{t('whales.topWallets')}</h3>
               <div className="space-y-3">
                 {[
                   { addr: 'bc1q...9f3e', balance: '245,678 BTC', label: 'Whale Unknown' },
@@ -155,12 +157,12 @@ export function WhalesPage() {
           </div>
 
           <div className="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/30 rounded-xl p-5">
-            <h3 className="text-white font-semibold mb-2">📊 Análise On-Chain</h3>
+            <h3 className="text-white font-semibold mb-2">{t('whales.analysisTitle')}</h3>
             <div className="space-y-2 text-sm text-slate-300">
-              <p>• <strong className="text-white">Exchange Inflows:</strong> Entradas em exchanges estão baixas, sinalizando acumulação.</p>
-              <p>• <strong className="text-white">Active Addresses:</strong> Número de endereços ativos cresceu 5.2% nas últimas 24h.</p>
-              <p>• <strong className="text-white">Whale Accumulation:</strong> Carteiras com +1000 BTC aumentaram posições em 2.3% esta semana.</p>
-              <p>• <strong className="text-white">Network Activity:</strong> Volume on-chain está 18% acima da média de 30 dias.</p>
+              <p>{t('whales.analysis1')}</p>
+              <p>{t('whales.analysis2')}</p>
+              <p>{t('whales.analysis3')}</p>
+              <p>{t('whales.analysis4')}</p>
             </div>
           </div>
         </div>
@@ -192,11 +194,3 @@ function MetricRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function formatTimeAgo(date: string): string {
-  const diff = Date.now() - new Date(date).getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(minutes / 60);
-  if (minutes < 60) return `${minutes}min atrás`;
-  if (hours < 24) return `${hours}h atrás`;
-  return `${Math.floor(hours / 24)}d atrás`;
-}

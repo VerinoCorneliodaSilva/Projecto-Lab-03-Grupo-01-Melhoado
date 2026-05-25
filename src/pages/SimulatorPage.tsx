@@ -3,6 +3,7 @@ import { cryptos } from '../data/cryptoData';
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { Calculator, TrendingUp, Target, Calendar, DollarSign } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export function SimulatorPage() {
   const [cryptoId, setCryptoId] = useState('bitcoin');
@@ -10,6 +11,7 @@ export function SimulatorPage() {
   const [months, setMonths] = useState('12');
   const [monthlyRate, setMonthlyRate] = useState('5');
   const [monthlyContribution, setMonthlyContribution] = useState('100');
+  const { t, formatNumber } = useLanguage();
 
   const crypto = cryptos.find((c) => c.id === cryptoId)!;
   const inv = parseFloat(investment) || 0;
@@ -51,19 +53,19 @@ export function SimulatorPage() {
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
           <Calculator className="w-8 h-8 text-indigo-400" />
-          Simulador de Investimento
+          {t('simulator.title')}
         </h1>
-        <p className="text-slate-400">Projete seus retornos com juros compostos e aportes mensais</p>
+        <p className="text-slate-400">{t('simulator.subtitle')}</p>
       </div>
 
       <div className="grid lg:grid-cols-[400px_1fr] gap-6">
         {/* Config */}
         <div className="space-y-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-            <h3 className="text-white font-semibold mb-4">Configuração</h3>
+            <h3 className="text-white font-semibold mb-4">{t('simulator.config')}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Criptomoeda</label>
+                <label className="block text-sm text-slate-400 mb-1.5">{t('simulator.crypto')}</label>
                 <select
                   value={cryptoId}
                   onChange={(e) => setCryptoId(e.target.value)}
@@ -78,7 +80,7 @@ export function SimulatorPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Investimento Inicial (USD)</label>
+                <label className="block text-sm text-slate-400 mb-1.5">{t('simulator.initialInvestment')}</label>
                 <input
                   type="number"
                   value={investment}
@@ -88,7 +90,7 @@ export function SimulatorPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Aporte Mensal (USD)</label>
+                <label className="block text-sm text-slate-400 mb-1.5">{t('simulator.monthlyContribution')}</label>
                 <input
                   type="number"
                   value={monthlyContribution}
@@ -98,7 +100,7 @@ export function SimulatorPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Taxa Mensal de Retorno (%)</label>
+                <label className="block text-sm text-slate-400 mb-1.5">{t('simulator.monthlyRate')}</label>
                 <input
                   type="number"
                   value={monthlyRate}
@@ -120,7 +122,7 @@ export function SimulatorPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-400 mb-1.5">Período (meses)</label>
+                <label className="block text-sm text-slate-400 mb-1.5">{t('simulator.period')}</label>
                 <input
                   type="range"
                   min="1"
@@ -130,9 +132,9 @@ export function SimulatorPage() {
                   className="w-full accent-indigo-500"
                 />
                 <div className="flex justify-between text-xs text-slate-500 mt-1">
-                  <span>1 mês</span>
-                  <span className="text-indigo-400 font-medium">{months} meses ({(parseInt(months) / 12).toFixed(1)} anos)</span>
-                  <span>10 anos</span>
+                  <span>1 {t('simulator.months')}</span>
+                  <span className="text-indigo-400 font-medium">{months} {t('simulator.months')} ({(parseInt(months) / 12).toFixed(1)} {t('simulator.years')})</span>
+                  <span>10 {t('simulator.years')}</span>
                 </div>
               </div>
             </div>
@@ -145,19 +147,19 @@ export function SimulatorPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <ResultCard
               icon={<Target className="w-4 h-4 text-indigo-400" />}
-              label="Saldo Final"
-              value={`$${finalBalance.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
+              label={t('simulator.finalBalance')}
+              value={`$${formatNumber(finalBalance, { maximumFractionDigits: 0 })}`}
               color="text-white"
             />
             <ResultCard
               icon={<DollarSign className="w-4 h-4 text-emerald-400" />}
-              label="Lucro Total"
-              value={`$${profit.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`}
+              label={t('simulator.totalProfit')}
+              value={`$${formatNumber(profit, { maximumFractionDigits: 0 })}`}
               color="text-emerald-400"
             />
             <ResultCard
               icon={<TrendingUp className="w-4 h-4 text-purple-400" />}
-              label="ROI"
+              label={t('simulator.roi')}
               value={`${roi.toFixed(1)}%`}
               color="text-purple-400"
             />
@@ -171,20 +173,20 @@ export function SimulatorPage() {
 
           {/* Chart */}
           <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
-            <h3 className="text-white font-semibold mb-4">Evolução do Patrimônio</h3>
+            <h3 className="text-white font-semibold mb-4">{t('simulator.evolution')}</h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={projection}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="month" stroke="#64748b" fontSize={11} label={{ value: 'Meses', position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 11 }} />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={11} label={{ value: t('simulator.months'), position: 'insideBottom', offset: -5, fill: '#64748b', fontSize: 11 }} />
                   <YAxis stroke="#64748b" fontSize={11} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px' }}
-                    formatter={(v: any) => [`$${Number(v).toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`]}
+                    formatter={(v: any) => [`$${formatNumber(Number(v), { maximumFractionDigits: 0 })}`]}
                   />
                   <Legend />
-                  <Line type="monotone" dataKey="balance" name="Saldo" stroke="#6366f1" strokeWidth={2.5} dot={false} />
-                  <Line type="monotone" dataKey="contributed" name="Investido" stroke="#64748b" strokeWidth={1.5} dot={false} strokeDasharray="5 5" />
+                  <Line type="monotone" dataKey="balance" name={t('simulator.balance')} stroke="#6366f1" strokeWidth={2.5} dot={false} />
+                  <Line type="monotone" dataKey="contributed" name={t('simulator.invested')} stroke="#64748b" strokeWidth={1.5} dot={false} strokeDasharray="5 5" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -192,13 +194,13 @@ export function SimulatorPage() {
 
           {/* Insights */}
           <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 rounded-xl p-5">
-            <h3 className="text-white font-semibold mb-3">💡 Análise</h3>
+            <h3 className="text-white font-semibold mb-3">{t('simulator.insights')}</h3>
             <ul className="space-y-2 text-sm text-slate-300">
-              <li>• Você investirá um total de <strong className="text-white">${totalContributed.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}</strong> ao longo de {months} meses</li>
-              <li>• Com retorno médio de <strong className="text-emerald-400">{monthlyRate}% ao mês</strong>, seu patrimônio pode crescer <strong className="text-emerald-400">{roi.toFixed(0)}%</strong></li>
-              <li>• O equivalente a aproximadamente <strong className="text-orange-400">{coinsBought.toFixed(4)} {crypto.symbol}</strong> no preço atual</li>
+              <li>{t('simulator.insight1', { amount: `$${formatNumber(totalContributed, { maximumFractionDigits: 0 })}`, months, period: parseInt(months) >= 12 ? t('simulator.years') : t('simulator.months') })}</li>
+              <li>{t('simulator.insight2', { rate: monthlyRate, roi: roi.toFixed(0) })}</li>
+              <li>{t('simulator.insight3', { coins: formatNumber(coinsBought, { maximumFractionDigits: 4 }), symbol: crypto.symbol })}</li>
               <li className="text-xs text-slate-500 pt-2 italic">
-                ⚠️ Projeção baseada em retornos constantes. Resultados reais podem variar significativamente.
+                {t('simulator.warning')}
               </li>
             </ul>
           </div>

@@ -3,8 +3,9 @@ import { useParams, Link, Navigate } from 'react-router-dom';
 import { cryptos, generatePriceHistory } from '../data/cryptoData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useWatchlist } from '../hooks/useWatchlist';
-import { Sparkline, PercentChange, CryptoIcon, formatNumber } from '../components/ui';
+import { Sparkline, PercentChange, CryptoIcon, formatNumber as uiFormatNumber } from '../components/ui';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, AreaChart, Bar, BarChart } from 'recharts';
+import { useLanguage } from '../context/LanguageContext';
 import { Star, ExternalLink, ArrowLeft, Clock, Activity, BarChart3, LineChart, CandlestickChart as CandlestickIcon, TrendingUp } from 'lucide-react';
 import { CandlestickChart, generateCandlestickData } from '../components/CandlestickChart';
 import { TechnicalIndicators } from '../components/TechnicalIndicators';
@@ -18,6 +19,7 @@ export function CoinDetail() {
   const { watchlist, toggle } = useWatchlist();
   const { id } = useParams();
   const { format, currency } = useCurrency();
+  const { t, formatNumber: formatLocaleNumber } = useLanguage();
   const [range, setRange] = useState<TimeRange>('30d');
 
   const coin = cryptos.find((c) => c.id === id);
@@ -51,12 +53,12 @@ export function CoinDetail() {
 
   // Estatísticas
   const stats = [
-    { label: 'Capitalização de Mercado', value: format(coin.marketCap, { compact: true }) },
-    { label: 'Volume (24h)', value: format(coin.volume24h, { compact: true }) },
-    { label: 'Oferta Circulante', value: `${formatNumber(coin.circulatingSupply, 0)} ${coin.symbol}` },
-    { label: 'Oferta Máxima', value: coin.maxSupply ? `${formatNumber(coin.maxSupply, 0)} ${coin.symbol}` : '∞ Ilimitado' },
-    { label: 'Máxima Histórica', value: format(allTimeHigh, { maxDecimals: coin.price < 1 ? 6 : 2 }) },
-    { label: 'Mínima Histórica', value: format(allTimeLow, { maxDecimals: coin.price < 1 ? 6 : 2 }) },
+    { label: t('coin.marketCap'), value: format(coin.marketCap, { compact: true }) },
+    { label: t('coin.volume24hLabel'), value: format(coin.volume24h, { compact: true }) },
+    { label: t('coin.circulatingSupply'), value: `${uiFormatNumber(coin.circulatingSupply, 0)} ${coin.symbol}` },
+    { label: t('coin.maxSupply'), value: coin.maxSupply ? `${uiFormatNumber(coin.maxSupply, 0)} ${coin.symbol}` : t('coin.maxSupplyUnlimited') },
+    { label: t('coin.allTimeHigh'), value: format(allTimeHigh, { maxDecimals: coin.price < 1 ? 6 : 2 }) },
+    { label: t('coin.allTimeLow'), value: format(allTimeLow, { maxDecimals: coin.price < 1 ? 6 : 2 }) },
   ];
 
   return (
@@ -64,7 +66,7 @@ export function CoinDetail() {
       {/* Breadcrumb */}
       <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-6">
         <ArrowLeft className="w-4 h-4" />
-        Voltar ao mercado
+        {t('coin.backToMarket')}
       </Link>
 
       {/* Header */}
@@ -106,7 +108,7 @@ export function CoinDetail() {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm rounded-lg border border-slate-700"
         >
-          Site Oficial
+          {t('coin.officialSite')}
           <ExternalLink className="w-4 h-4" />
         </a>
       </div>
@@ -118,7 +120,7 @@ export function CoinDetail() {
             <div>
               <h3 className="text-white font-semibold mb-1 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-indigo-400" />
-                Gráfico de Preço ({currency})
+                {t('coin.chart', { currency })}
               </h3>
               <p className={`text-sm ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}>
                 {isPositive ? '▲' : '▼'} {Math.abs(priceChange).toFixed(2)}% no período
@@ -144,21 +146,21 @@ export function CoinDetail() {
                 <button
                   onClick={() => setChartType('area')}
                   className={`p-1.5 rounded-md transition-colors ${chartType === 'area' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'}`}
-                  title="Área"
+                  title={t('coin.area')}
                 >
                   <BarChart3 className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setChartType('line')}
                   className={`p-1.5 rounded-md transition-colors ${chartType === 'line' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'}`}
-                  title="Linha"
+                  title={t('coin.line')}
                 >
                   <LineChart className="w-3.5 h-3.5" />
                 </button>
                 <button
                   onClick={() => setChartType('candle')}
                   className={`p-1.5 rounded-md transition-colors ${chartType === 'candle' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'}`}
-                  title="Candlestick"
+                  title={t('coin.candle')}
                 >
                   <CandlestickIcon className="w-3.5 h-3.5" />
                 </button>
@@ -187,7 +189,7 @@ export function CoinDetail() {
                     domain={['auto', 'auto']}
                     tickFormatter={(v) => {
                       const n = Number(v);
-                      if (n >= 1000) return new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+                      if (n >= 1000) return formatLocaleNumber(n, { notation: 'compact', maximumFractionDigits: 1 });
                       return n.toFixed(coin.price < 1 ? 4 : 2);
                     }}
                   />
@@ -212,7 +214,7 @@ export function CoinDetail() {
           <div className="mt-4 pt-4 border-t border-slate-800">
             <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
               <BarChart3 className="w-3 h-3" />
-              Volume (24h)
+              {t('coin.volumeChart')}
             </div>
             <div className="h-20">
               <ResponsiveContainer width="100%" height="100%">
@@ -233,7 +235,7 @@ export function CoinDetail() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-400" />
-            Estatísticas
+            {t('coin.stats')}
           </h3>
           <div className="space-y-3">
             {stats.map((s) => (
@@ -249,7 +251,7 @@ export function CoinDetail() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
             <Activity className="w-4 h-4 text-orange-400" />
-            Fear & Greed
+            {t('coin.fearGreed')}
           </h3>
           <FearGreedIndex size="md" />
         </div>
@@ -269,7 +271,7 @@ export function CoinDetail() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
-            Indicadores Técnicos
+            {t('coin.techIndicators')}
           </h3>
           <TechnicalIndicators prices={priceArray} />
         </div>
@@ -277,23 +279,23 @@ export function CoinDetail() {
 
       {/* About */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 mt-6">
-        <h3 className="text-white font-semibold mb-3">Sobre {coin.name}</h3>
+        <h3 className="text-white font-semibold mb-3">{t('coin.about', { name: coin.name })}</h3>
         <p className="text-slate-300 leading-relaxed">{coin.description}</p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-5 border-t border-slate-800 text-sm">
           <div>
-            <div className="text-slate-500 text-xs mb-1">Ano de Lançamento</div>
+            <div className="text-slate-500 text-xs mb-1">{t('coin.launchYear')}</div>
             <div className="text-white font-medium">{coin.launchYear}</div>
           </div>
           <div>
-            <div className="text-slate-500 text-xs mb-1">Alteração 1h</div>
+            <div className="text-slate-500 text-xs mb-1">{t('coin.change1h')}</div>
             <PercentChange value={coin.change1h} />
           </div>
           <div>
-            <div className="text-slate-500 text-xs mb-1">Alteração 24h</div>
+            <div className="text-slate-500 text-xs mb-1">{t('coin.change24h')}</div>
             <PercentChange value={coin.change24h} />
           </div>
           <div>
-            <div className="text-slate-500 text-xs mb-1">Alteração 7d</div>
+            <div className="text-slate-500 text-xs mb-1">{t('coin.change7d')}</div>
             <PercentChange value={coin.change7d} />
           </div>
         </div>
@@ -301,7 +303,7 @@ export function CoinDetail() {
 
       {/* Related coins */}
       <div className="mt-8">
-        <h3 className="text-white font-semibold mb-4">Outras Moedas em Destaque</h3>
+        <h3 className="text-white font-semibold mb-4">{t('coin.related')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {cryptos
             .filter((c) => c.id !== coin.id)

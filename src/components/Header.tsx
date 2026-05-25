@@ -47,21 +47,21 @@ export function Header() {
 
   const navItems = [
     { to: '/', label: t('nav.market'), icon: LayoutGrid },
-    { to: '/heatmap', label: 'Heatmap', icon: Flame },
+    { to: '/heatmap', label: t('nav.heatmap'), icon: Flame },
     { to: '/trending', label: t('nav.trending'), icon: TrendingUp },
-    { to: '/news', label: 'Notícias', icon: Newspaper },
+    { to: '/news', label: t('nav.news'), icon: Newspaper },
     ...(user ? [
       { to: '/portfolio', label: t('nav.portfolio'), icon: Wallet },
-      { to: '/alerts', label: 'Alertas', icon: Bell },
+      { to: '/alerts', label: t('nav.alerts'), icon: Bell },
     ] : []),
   ];
 
   const moreItems = [
-    { to: '/converter', label: 'Conversor', icon: ArrowLeftRight },
-    { to: '/compare', label: 'Comparar', icon: GitCompareArrows },
-    { to: '/simulator', label: 'Simulador', icon: Calculator },
-    { to: '/whales', label: 'Whales', icon: Fish },
-    { to: '/calendar', label: 'Calendário', icon: Calendar },
+    { to: '/converter', label: t('nav.converter'), icon: ArrowLeftRight },
+    { to: '/compare', label: t('nav.compare'), icon: GitCompareArrows },
+    { to: '/simulator', label: t('nav.simulator'), icon: Calculator },
+    { to: '/whales', label: t('nav.whales'), icon: Fish },
+    { to: '/calendar', label: t('nav.calendar'), icon: Calendar },
     { to: '/watchlist', label: t('nav.watchlist'), icon: Star },
   ];
 
@@ -261,7 +261,7 @@ export function Header() {
         {/* Mobile nav */}
         {mobileMenuOpen && (
           <nav className={`xl:hidden pb-4 flex flex-col gap-1 border-t pt-3 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-            <div className={`text-xs font-semibold uppercase text-slate-500 px-3 py-1 ${isDark ? '' : ''}`}>Principal</div>
+            <div className={`text-xs font-semibold uppercase text-slate-500 px-3 py-1 ${isDark ? '' : ''}`}>{t('nav.principal')}</div>
             {navItems.map((item) => (
               <Link
                 key={item.to}
@@ -275,7 +275,7 @@ export function Header() {
                 {item.label}
               </Link>
             ))}
-            <div className={`text-xs font-semibold uppercase text-slate-500 px-3 py-1 mt-2`}>Ferramentas</div>
+            <div className={`text-xs font-semibold uppercase text-slate-500 px-3 py-1 mt-2`}>{t('nav.moreTools')}</div>
             {moreItems.map((item) => (
               <Link
                 key={item.to}

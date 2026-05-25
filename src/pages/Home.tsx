@@ -7,6 +7,7 @@ import { useWatchlist } from '../hooks/useWatchlist';
 import { TrendingUp, TrendingDown, Flame, Zap, BarChart3, Globe, ChevronRight, Gift, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatNumber } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 
 type FilterType = 'all' | 'gainers' | 'losers' | 'new';
 
@@ -15,6 +16,7 @@ export function Home() {
   const { cryptos: allCryptos } = useRealtimePrices();
   const { watchlist, toggle } = useWatchlist();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<FilterType>('all');
   const [showCount, setShowCount] = useState(20);
   const [showBanner, setShowBanner] = useState(!localStorage.getItem('cn_banner_dismissed'));
@@ -56,17 +58,17 @@ export function Home() {
             </div>
             <div className="flex-1">
               <h3 className="text-lg md:text-xl font-bold text-white mb-1">
-                Comece a negociar com $10.000 de bônus!
+                {t('home.promoTitle')}
               </h3>
               <p className="text-slate-300 text-sm">
-                Crie sua conta gratuita e receba saldo virtual para comprar e vender criptomoedas. Sem riscos, sem compromisso.
+                {t('home.promoBody')}
               </p>
             </div>
             <Link
               to="/auth"
               className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-6 py-2.5 rounded-lg whitespace-nowrap"
             >
-              Cadastrar Grátis
+              {t('home.ctaFree')}
             </Link>
           </div>
         </div>
@@ -77,31 +79,31 @@ export function Home() {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-              Hoje no Mercado de Criptoativos {symbol}
+              {t('home.title')} {symbol}
             </h1>
             <p className="text-slate-400 text-sm md:text-base">
-              Preços por capitalização de mercado • Atualizado agora
+              {t('home.subtitle')} • {t('home.liveLabel')}
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Atualização ao vivo
+            {t('home.live')}
           </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
-          <StatCard label="Capitalização de Mercado" value={format(globalStats.totalMcap, { compact: true })} change={globalStats.avgChange} />
-          <StatCard label="Volume (24h)" value={format(globalStats.totalVol, { compact: true })} />
-          <StatCard label="Dominância BTC" value={`${globalStats.btcDom.toFixed(1)}%`} icon={<span className="text-orange-400">₿</span>} />
-          <StatCard label="Dominância ETH" value={`${globalStats.ethDom.toFixed(1)}%`} icon={<span className="text-indigo-400">Ξ</span>} />
-          <StatCard label="Criptomoedas Ativas" value={formatNumber(globalStats.count, 0)} icon={<Globe className="w-4 h-4 text-indigo-400" />} />
+          <StatCard label={t('home.marketCap')} value={format(globalStats.totalMcap, { compact: true })} change={globalStats.avgChange} />
+          <StatCard label={t('home.volume24h')} value={format(globalStats.totalVol, { compact: true })} />
+          <StatCard label={t('home.btcDominance')} value={`${globalStats.btcDom.toFixed(1)}%`} icon={<span className="text-orange-400">₿</span>} />
+          <StatCard label={t('home.ethDominance')} value={`${globalStats.ethDom.toFixed(1)}%`} icon={<span className="text-indigo-400">Ξ</span>} />
+          <StatCard label={t('home.activeCryptos')} value={formatNumber(globalStats.count, 0)} icon={<Globe className="w-4 h-4 text-indigo-400" />} />
         </div>
       </div>
 
       {/* Trending strip */}
       <div className="grid md:grid-cols-2 gap-4 mb-8">
-        <TrendingStrip title="Maiores Altas (24h)" icon={<TrendingUp className="w-4 h-4 text-emerald-400" />} items={topGainers} color="emerald" />
-        <TrendingStrip title="Maiores Baixas (24h)" icon={<TrendingDown className="w-4 h-4 text-red-400" />} items={topLosers} color="red" />
+        <TrendingStrip title={t('home.gainers')} icon={<TrendingUp className="w-4 h-4 text-emerald-400" />} items={topGainers} color="emerald" />
+        <TrendingStrip title={t('home.losers')} icon={<TrendingDown className="w-4 h-4 text-red-400" />} items={topLosers} color="red" />
       </div>
 
       {/* Main table section */}
@@ -109,20 +111,20 @@ export function Home() {
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 md:px-6 py-4 border-b border-slate-800">
           <div className="flex items-center gap-1 overflow-x-auto">
             <FilterButton active={filter === 'all'} onClick={() => setFilter('all')} icon={<BarChart3 className="w-4 h-4" />}>
-              Todos
+              {t('filter.all')}
             </FilterButton>
             <FilterButton active={filter === 'gainers'} onClick={() => setFilter('gainers')} icon={<TrendingUp className="w-4 h-4" />}>
-              Altas
+              {t('filter.gainers')}
             </FilterButton>
             <FilterButton active={filter === 'losers'} onClick={() => setFilter('losers')} icon={<TrendingDown className="w-4 h-4" />}>
-              Baixas
+              {t('filter.losers')}
             </FilterButton>
             <FilterButton active={filter === 'new'} onClick={() => setFilter('new')} icon={<Flame className="w-4 h-4" />}>
-              Recentes
+              {t('filter.new')}
             </FilterButton>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <label className="text-slate-400">Mostrar:</label>
+            <label className="text-slate-400">{t('home.show')}:</label>
             <select
               value={showCount}
               onChange={(e) => setShowCount(Number(e.target.value))}
@@ -140,20 +142,20 @@ export function Home() {
       {/* Quick info cards */}
       <div className="grid md:grid-cols-3 gap-4 mt-8">
         <InfoCard
-          title="Conversor de Moedas"
-          description="Converta qualquer criptomoeda em moedas fiduciárias instantaneamente."
+          title={t('home.converterCardTitle')}
+          description={t('home.converterCardDesc')}
           icon={<Zap className="w-5 h-5 text-indigo-400" />}
           to="/converter"
         />
         <InfoCard
-          title="Sua Watchlist"
-          description="Acompanhe suas criptomoedas favoritas em um só lugar."
+          title={t('home.watchlistCardTitle')}
+          description={t('home.watchlistCardDesc')}
           icon={<Flame className="w-5 h-5 text-orange-400" />}
           to="/watchlist"
         />
         <InfoCard
-          title="Tendências"
-          description="Descubra as criptomoedas mais buscadas e em alta no momento."
+          title={t('home.trendingCardTitle')}
+          description={t('home.trendingCardDesc')}
           icon={<TrendingUp className="w-5 h-5 text-emerald-400" />}
           to="/trending"
         />

@@ -16,7 +16,7 @@ const languages: { code: Language; name: string; flag: string }[] = [
 export function SettingsPage() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { lang, setLang, t } = useLanguage();
+  const { lang, setLang, t, formatDate } = useLanguage();
   const { currency, setCurrency } = useCurrency();
   const [saved, setSaved] = useState(false);
 
@@ -34,12 +34,12 @@ export function SettingsPage() {
           <SettingsIcon className="w-8 h-8 text-indigo-400" />
           {t('settings.title')}
         </h1>
-        <p className="text-slate-400">Personalize sua experiência no CryptoNova</p>
+        <p className="text-slate-400">{t('settings.personalize')}</p>
       </div>
 
       <div className="space-y-6">
         {/* Profile */}
-        <SettingsSection title="Perfil" icon={<User className="w-5 h-5" />}>
+        <SettingsSection title={t('settings.profile')} icon={<User className="w-5 h-5" />}>
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold">
               {user.name.charAt(0).toUpperCase()}
@@ -48,7 +48,7 @@ export function SettingsPage() {
               <div className="text-white font-medium">{user.name}</div>
               <div className="text-slate-400 text-sm">{user.email}</div>
               <div className="text-xs text-slate-500 mt-1">
-                Membro desde {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                {t('settings.memberSince', { date: formatDate(user.createdAt) })}
               </div>
             </div>
           </div>
@@ -123,35 +123,35 @@ export function SettingsPage() {
         </SettingsSection>
 
         {/* Security (placeholder) */}
-        <SettingsSection title="Segurança" icon={<Shield className="w-5 h-5" />}>
+        <SettingsSection title={t('settings.security')} icon={<Shield className="w-5 h-5" />}>
           <div className="space-y-3">
             <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
               <div>
-                <div className="text-sm font-medium text-white">Autenticação de 2 Fatores</div>
-                <div className="text-xs text-slate-400">Adicione uma camada extra de segurança</div>
+                <div className="text-sm font-medium text-white">{t('settings.twoFactor')}</div>
+                <div className="text-xs text-slate-400">{t('settings.twoFactorDesc')}</div>
               </div>
               <button className="text-xs bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg">
-                Ativar
+                {t('common.activate')}
               </button>
             </div>
             <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
               <div>
-                <div className="text-sm font-medium text-white">Alterar Senha</div>
-                <div className="text-xs text-slate-400">Última alteração: há 30 dias</div>
+                <div className="text-sm font-medium text-white">{t('settings.changePassword')}</div>
+                <div className="text-xs text-slate-400">{t('settings.changePasswordDesc')}</div>
               </div>
               <button className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg">
-                Alterar
+                {t('common.edit')}
               </button>
             </div>
           </div>
         </SettingsSection>
 
         {/* Notifications */}
-        <SettingsSection title="Notificações" icon={<Bell className="w-5 h-5" />}>
+        <SettingsSection title={t('settings.notifications')} icon={<Bell className="w-5 h-5" />}>
           <div className="space-y-3">
-            <ToggleOption label="Alertas de Preço" desc="Receba notificações quando preços atingirem certos limites" defaultChecked />
-            <ToggleOption label="Alertas de Transação" desc="Notifique-me sobre transações da conta" defaultChecked />
-            <ToggleOption label="Novidades e Atualizações" desc="Receba notícias sobre novos recursos" />
+            <ToggleOption label={t('settings.priceAlerts')} desc={t('settings.priceAlertsDesc')} defaultChecked />
+            <ToggleOption label={t('settings.transactionAlerts')} desc={t('settings.transactionAlertsDesc')} defaultChecked />
+            <ToggleOption label={t('settings.newsUpdates')} desc={t('settings.newsUpdatesDesc')} />
           </div>
         </SettingsSection>
 

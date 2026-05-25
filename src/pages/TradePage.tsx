@@ -6,6 +6,7 @@ import { useNotification } from '../context/NotificationContext';
 import { useRealtimePrices } from '../hooks/useRealtimePrices';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { CryptoIcon, PercentChange, Sparkline } from '../components/ui';
+import { useLanguage } from '../context/LanguageContext';
 import { ArrowLeft, Wallet, TrendingUp, AlertCircle } from 'lucide-react';
 
 type TradeType = 'buy' | 'sell';
@@ -17,6 +18,7 @@ export function TradePage() {
   const { user } = useAuth();
   const { format } = useCurrency();
   const notify = useNotification();
+  const { t } = useLanguage();
   const { cryptos } = useRealtimePrices();
   const { holdings, buy, sell } = usePortfolio();
 
@@ -49,7 +51,7 @@ export function TradePage() {
   const handleTrade = async () => {
     setError('');
     if (!canTrade) {
-      setError(tradeType === 'buy' ? 'Saldo insuficiente' : 'Quantidade insuficiente');
+      setError(tradeType === 'buy' ? t('portfolio.insufficientBalance') : t('portfolio.insufficientHoldings'));
       return;
     }
 
@@ -64,15 +66,15 @@ export function TradePage() {
 
       if (result.success) {
         if (tradeType === 'buy') {
-          notify.success('Compra realizada! ✓', `Você comprou ${numAmount.toFixed(6)} ${coin.symbol}`);
+          notify.success(t('portfolio.buySuccess'), `Você comprou ${numAmount.toFixed(6)} ${coin.symbol}`);
         } else {
-          notify.success('Venda realizada! ✓', `Você vendeu ${numAmount.toFixed(6)} ${coin.symbol}`);
+          notify.success(t('portfolio.sellSuccess'), `Você vendeu ${numAmount.toFixed(6)} ${coin.symbol}`);
         }
         setAmount('');
         setTimeout(() => navigate('/portfolio'), 1200);
       } else {
-        setError(result.error || 'Erro ao processar operação');
-        notify.error('Erro na operação', result.error);
+        setError(result.error || t('common.error'));
+        notify.error(t('common.error'), result.error);
       }
     } finally {
       setIsProcessing(false);
@@ -101,7 +103,7 @@ export function TradePage() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       <Link to={`/coin/${coin.id}`} className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white mb-6">
         <ArrowLeft className="w-4 h-4" />
-        Voltar para {coin.name}
+        {t('trade.backToCoin', { name: coin.name })}
       </Link>
 
       <div className="grid md:grid-cols-[1fr_400px] gap-6">
@@ -120,7 +122,7 @@ export function TradePage() {
             </div>
             <div className="flex items-center justify-between py-4 border-t border-slate-800">
               <div>
-                <div className="text-xs text-slate-400 mb-1">Preço Atual</div>
+                <div className="text-xs text-slate-400 mb-1">{t('trade.currentPrice')}</div>
                 <div className="text-2xl font-bold text-white">
                   {format(coin.price, { maxDecimals: coin.price < 1 ? 8 : 2 })}
                 </div>
@@ -130,10 +132,10 @@ export function TradePage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <StatBox label="Market Cap" value={format(coin.marketCap, { compact: true })} />
-            <StatBox label="Volume 24h" value={format(coin.volume24h, { compact: true })} />
+            <StatBox label={t('trade.marketCap')} value={format(coin.marketCap, { compact: true })} />
+            <StatBox label={t('trade.volume24h')} value={format(coin.volume24h, { compact: true })} />
             <StatBox label="Máxima 24h" value={`+${Math.abs(coin.change24h).toFixed(2)}%`} color="text-emerald-400" />
-            <StatBox label="Você Possui" value={`${holdingAmount.toFixed(6)} ${coin.symbol}`} />
+            <StatBox label={t('trade.youOwn')} value={`${holdingAmount.toFixed(6)} ${coin.symbol}`} />
           </div>
         </div>
 
@@ -141,7 +143,7 @@ export function TradePage() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 sticky top-20 h-fit">
           <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-indigo-400" />
-            Negociar {coin.symbol}
+            {t('trade.title', { symbol: coin.symbol })}
           </h2>
 
           <div className="flex gap-1 bg-slate-800 p-1 rounded-lg mb-4">
@@ -151,7 +153,7 @@ export function TradePage() {
                 tradeType === 'buy' ? 'bg-emerald-500 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Comprar
+              {t('trade.buy')}
             </button>
             <button
               onClick={() => setTradeType('sell')}
@@ -159,13 +161,13 @@ export function TradePage() {
                 tradeType === 'sell' ? 'bg-red-500 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Vender
+              {t('trade.sell')}
             </button>
           </div>
 
           <div className="bg-slate-800/50 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between text-sm mb-1">
-              <span className="text-slate-400">Disponível</span>
+              <span className="text-slate-400">{t('trade.available')}</span>
               <Wallet className="w-4 h-4 text-slate-500" />
             </div>
             <div className="text-white font-medium">
@@ -178,7 +180,7 @@ export function TradePage() {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-slate-300 mb-1.5">
-              Quantidade ({coin.symbol})
+              {t('trade.quantityLabel', { symbol: coin.symbol })}
             </label>
             <div className="relative">
               <input
@@ -193,7 +195,7 @@ export function TradePage() {
                 onClick={setMax}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-indigo-400 hover:text-indigo-300 px-2 py-1 bg-indigo-500/10 rounded"
               >
-                MAX
+                {t('trade.max')}
               </button>
             </div>
             <div className="flex gap-1 mt-2">
@@ -210,11 +212,11 @@ export function TradePage() {
           </div>
 
           <div className="space-y-2 mb-4 pb-4 border-b border-slate-800">
-            <Row label="Preço" value={format(coin.price, { maxDecimals: coin.price < 1 ? 6 : 2 })} />
-            <Row label="Subtotal" value={format(totals.subtotal)} />
-            <Row label="Taxa (0.1%)" value={format(totals.fee)} muted />
+            <Row label={t('trade.price')} value={format(coin.price, { maxDecimals: coin.price < 1 ? 6 : 2 })} />
+            <Row label={t('trade.subtotal')} value={format(totals.subtotal)} />
+            <Row label={t('trade.fee')} value={format(totals.fee)} muted />
             <Row
-              label={tradeType === 'buy' ? 'Você paga' : 'Você recebe'}
+              label={tradeType === 'buy' ? t('trade.youPay') : t('trade.youReceive')}
               value={format(totals.total)}
               highlight
             />
@@ -236,11 +238,11 @@ export function TradePage() {
                 : 'bg-red-500 hover:bg-red-600 text-white'
             }`}
           >
-            {isProcessing ? 'Processando...' : tradeType === 'buy' ? `Comprar ${coin.symbol}` : `Vender ${coin.symbol}`}
+            {isProcessing ? t('trade.process') : tradeType === 'buy' ? `${t('trade.buy')} ${coin.symbol}` : `${t('trade.sell')} ${coin.symbol}`}
           </button>
 
           <p className="text-xs text-slate-500 text-center mt-3">
-            Transação segura via banco de dados criptografado
+            {t('trade.secureNotice')}
           </p>
         </div>
       </div>

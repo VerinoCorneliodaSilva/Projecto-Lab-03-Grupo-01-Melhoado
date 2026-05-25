@@ -5,10 +5,12 @@ import { Shield, Users, Activity, AlertCircle, CheckCircle2, Clock, TrendingUp, 
 import { adminApi } from '../services/api';
 import { UserRecord, LogRecord } from '../services/database';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 
 export function AdminPage() {
   const { user } = useAuth();
   const notify = useNotification();
+  const { t, formatDateTime } = useLanguage();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'logs'>('dashboard');
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [logs, setLogs] = useState<LogRecord[]>([]);
@@ -40,7 +42,7 @@ export function AdminPage() {
   const toggleUser = async (userId: string) => {
     const result = await adminApi.toggleUserStatus(userId);
     if (result.success) {
-      notify.success('Usuário atualizado');
+      notify.success(t('admin.userUpdated'));
       await loadData();
     }
   };
@@ -50,9 +52,9 @@ export function AdminPage() {
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
           <Shield className="w-8 h-8 text-indigo-400" />
-          Painel Administrativo
+          {t('admin.title')}
         </h1>
-        <p className="text-slate-400">Gerencie usuários, monitore atividades e visualize estatísticas</p>
+        <p className="text-slate-400">{t('admin.subtitle')}</p>
       </div>
 
       {/* Tabs */}
@@ -63,7 +65,7 @@ export function AdminPage() {
             activeTab === 'dashboard' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Dashboard
+          {t('admin.dashboard')}
         </button>
         <button
           onClick={() => setActiveTab('users')}
@@ -71,7 +73,7 @@ export function AdminPage() {
             activeTab === 'users' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Usuários
+          {t('admin.users')}
         </button>
         <button
           onClick={() => setActiveTab('logs')}
@@ -79,7 +81,7 @@ export function AdminPage() {
             activeTab === 'logs' ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-white'
           }`}
         >
-          Logs do Sistema
+          {t('admin.logs')}
         </button>
       </div>
 
@@ -91,36 +93,36 @@ export function AdminPage() {
               className="flex items-center gap-2 text-sm text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-lg"
             >
               <RefreshCw className="w-4 h-4" />
-              Atualizar
+              {t('admin.refresh')}
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatCard icon={<Users className="w-5 h-5 text-indigo-400" />} label="Total de Usuários" value={stats?.totalUsers || 0} />
-            <StatCard icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} label="Ativos" value={stats?.activeUsers || 0} />
-            <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-400" />} label="Transações" value={stats?.totalTransactions || 0} />
-            <StatCard icon={<Database className="w-5 h-5 text-orange-400" />} label="Volume Total" value={`$${((stats?.totalVolume || 0) / 1000).toFixed(1)}k`} />
+            <StatCard icon={<Users className="w-5 h-5 text-indigo-400" />} label={t('admin.totalUsers')} value={stats?.totalUsers || 0} />
+            <StatCard icon={<CheckCircle2 className="w-5 h-5 text-emerald-400" />} label={t('admin.activeUsers')} value={stats?.activeUsers || 0} />
+            <StatCard icon={<TrendingUp className="w-5 h-5 text-purple-400" />} label={t('admin.totalTransactions')} value={stats?.totalTransactions || 0} />
+            <StatCard icon={<Database className="w-5 h-5 text-orange-400" />} label={t('admin.totalVolume')} value={`$${((stats?.totalVolume || 0) / 1000).toFixed(1)}k`} />
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-400" />
-                Status do Sistema
+                {t('admin.systemStatus')}
               </h3>
               <div className="space-y-3">
-                <StatusRow label="API Principal" status="online" />
-                <StatusRow label="Banco de Dados" status="online" />
-                <StatusRow label="WebSocket" status="online" />
-                <StatusRow label="Serviço de Email" status="online" />
-                <StatusRow label="CDN" status="online" />
-                <StatusRow label="Serviço de Backup" status="warning" />
+                <StatusRow label="API Principal" status="online" t={t} />
+                <StatusRow label="Banco de Dados" status="online" t={t} />
+                <StatusRow label="WebSocket" status="online" t={t} />
+                <StatusRow label="Serviço de Email" status="online" t={t} />
+                <StatusRow label="CDN" status="online" t={t} />
+                <StatusRow label="Serviço de Backup" status="warning" t={t} />
               </div>
             </div>
 
             <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
               <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-yellow-400" />
-                Alertas Recentes
+                {t('admin.recentAlerts')}
               </h3>
               <div className="space-y-2">
                 <AlertRow severity="warning" message="Uso de CPU acima de 80%" time="5min" />
@@ -139,19 +141,19 @@ export function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-800 text-slate-400 text-xs">
-                  <th className="text-left py-3 px-4 font-medium">Usuário</th>
-                  <th className="text-left py-3 px-4 font-medium">Email</th>
-                  <th className="text-right py-3 px-4 font-medium">Saldo</th>
-                  <th className="text-center py-3 px-4 font-medium">Status</th>
-                  <th className="text-right py-3 px-4 font-medium">Último Login</th>
-                  <th className="text-right py-3 px-4 font-medium">Ações</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('admin.user')}</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('admin.email')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('admin.balance')}</th>
+                  <th className="text-center py-3 px-4 font-medium">{t('admin.status')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('admin.lastLogin')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('admin.actions')}</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} className="py-8 text-center text-slate-500">Carregando do banco...</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-slate-500">{t('admin.loadingUsers')}</td></tr>
                 ) : users.length === 0 ? (
-                  <tr><td colSpan={6} className="py-8 text-center text-slate-500">Nenhum usuário cadastrado</td></tr>
+                  <tr><td colSpan={6} className="py-8 text-center text-slate-500">{t('admin.noUsers')}</td></tr>
                 ) : users.map((u) => (
                   <tr key={u.id} className="border-b border-slate-800/60 hover:bg-slate-900/60">
                     <td className="py-3 px-4">
@@ -170,18 +172,18 @@ export function AdminPage() {
                           ? 'bg-emerald-500/10 text-emerald-400'
                           : 'bg-red-500/10 text-red-400'
                       }`}>
-                        {u.isActive ? '● Ativo' : '● Banido'}
+                        {u.isActive ? `● ${t('admin.online')}` : `● ${t('admin.ban')}`}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right text-slate-500 text-xs">
-                      {u.lastLogin ? new Date(u.lastLogin).toLocaleString('pt-BR') : 'Nunca'}
+                      {u.lastLogin ? formatDateTime(u.lastLogin) : t('admin.never')}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <button
                         onClick={() => toggleUser(u.id)}
                         className={`text-xs font-medium ${u.isActive ? 'text-red-400 hover:text-red-300' : 'text-emerald-400 hover:text-emerald-300'}`}
                       >
-                        {u.isActive ? 'Banir' : 'Desbanir'}
+                        {u.isActive ? t('admin.ban') : t('admin.unban')}
                       </button>
                     </td>
                   </tr>
@@ -195,9 +197,9 @@ export function AdminPage() {
       {activeTab === 'logs' && (
         <div className="space-y-2">
           {loading ? (
-            <div className="py-8 text-center text-slate-500">Carregando logs do banco...</div>
+            <div className="py-8 text-center text-slate-500">{t('admin.loadingLogs')}</div>
           ) : logs.length === 0 ? (
-            <div className="py-8 text-center text-slate-500">Nenhum log registrado</div>
+            <div className="py-8 text-center text-slate-500">{t('admin.noLogs')}</div>
           ) : logs.map((log) => {
             const typeConfig = {
               auth: { icon: <CheckCircle2 className="w-4 h-4" />, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -228,7 +230,7 @@ export function AdminPage() {
                 </div>
                 <div className="text-xs text-slate-500 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  {formatTimeAgo(log.timestamp)}
+                  {formatTimeAgo(log.timestamp, t)}
                 </div>
               </div>
             );
@@ -251,16 +253,16 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
-function StatusRow({ label, status }: { label: string; status: 'online' | 'warning' | 'offline' }) {
+function StatusRow({ label, status, t }: { label: string; status: 'online' | 'warning' | 'offline'; t: (key: string, vars?: Record<string, string | number>) => string }) {
   const colors = {
     online: 'text-emerald-400',
     warning: 'text-yellow-400',
     offline: 'text-red-400',
   };
   const labels = {
-    online: 'Online',
-    warning: 'Degradado',
-    offline: 'Offline',
+    online: t('admin.online'),
+    warning: t('admin.warning'),
+    offline: t('admin.offline'),
   };
   return (
     <div className="flex items-center justify-between py-2 border-b border-slate-800 last:border-0">
@@ -287,11 +289,11 @@ function AlertRow({ severity, message, time }: { severity: 'info' | 'warning' | 
   );
 }
 
-function formatTimeAgo(date: string): string {
+function formatTimeAgo(date: string, t: (key: string, vars?: Record<string, string | number>) => string): string {
   const diff = Date.now() - new Date(date).getTime();
   const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${minutes}min`;
+  if (minutes < 60) return t('admin.minutesAgo', { minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+  if (hours < 24) return t('admin.hoursAgo', { hours });
+  return t('admin.daysAgo', { days: Math.floor(hours / 24) });
 }

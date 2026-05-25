@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { tradeApi, watchlistApi } from '../services/api';
+import { tradeApi, type PortfolioSnapshotRecord, watchlistApi } from '../services/api';
 import { HoldingRecord, TransactionRecord, WatchlistRecord } from '../services/database';
 
 export interface PortfolioData {
   holdings: HoldingRecord[];
   transactions: TransactionRecord[];
+  snapshots: PortfolioSnapshotRecord[];
   watchlist: WatchlistRecord | null;
   isLoading: boolean;
   buy: (cryptoId: string, symbol: string, amount: number, price: number) => Promise<{ success: boolean; error?: string; message?: string }>;
@@ -18,6 +19,7 @@ export function usePortfolio(): PortfolioData {
   const { user, refreshUser } = useAuth();
   const [holdings, setHoldings] = useState<HoldingRecord[]>([]);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [snapshots, setSnapshots] = useState<PortfolioSnapshotRecord[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistRecord | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -25,19 +27,22 @@ export function usePortfolio(): PortfolioData {
     if (!user) {
       setHoldings([]);
       setTransactions([]);
+      setSnapshots([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      const [holdingsRes, txRes, watchRes] = await Promise.all([
+      const [holdingsRes, txRes, snapshotsRes, watchRes] = await Promise.all([
         tradeApi.getHoldings(user.id),
         tradeApi.getTransactions(user.id),
+        tradeApi.getPortfolioSnapshots(user.id),
         watchlistApi.get(user.id),
       ]);
       if (holdingsRes.success) setHoldings(holdingsRes.data || []);
       if (txRes.success) setTransactions(txRes.data || []);
+      if (snapshotsRes.success) setSnapshots(snapshotsRes.data || []);
       if (watchRes.success) setWatchlist(watchRes.data || null);
     } finally {
       setIsLoading(false);
@@ -87,5 +92,5 @@ export function usePortfolio(): PortfolioData {
     }
   }, [user]);
 
-  return { holdings, transactions, watchlist, isLoading, buy, sell, toggleWatchlist, refresh };
+  return { holdings, transactions, snapshots, watchlist, isLoading, buy, sell, toggleWatchlist, refresh };
 }

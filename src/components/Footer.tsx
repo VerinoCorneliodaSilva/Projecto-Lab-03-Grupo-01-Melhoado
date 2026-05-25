@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 export function Footer() {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-slate-950 border-t border-slate-800 mt-16">
       <div className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
@@ -17,12 +20,12 @@ export function Footer() {
             </span>
           </Link>
           <p className="text-sm text-slate-400">
-            A plataforma profissional completa para acompanhar o mercado de criptomoedas.
+            {t('footer.description')}
           </p>
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-white mb-3">Produtos</h4>
+          <h4 className="text-sm font-semibold text-white mb-3">{t('footer.products')}</h4>
           <ul className="space-y-2 text-sm text-slate-400">
             <li><Link to="/" className="hover:text-white">Mercado</Link></li>
             <li><Link to="/heatmap" className="hover:text-white">Heatmap</Link></li>
@@ -33,7 +36,7 @@ export function Footer() {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-white mb-3">Trading</h4>
+          <h4 className="text-sm font-semibold text-white mb-3">{t('footer.trading')}</h4>
           <ul className="space-y-2 text-sm text-slate-400">
             <li><Link to="/portfolio" className="hover:text-white">Portfólio</Link></li>
             <li><Link to="/watchlist" className="hover:text-white">Watchlist</Link></li>
@@ -43,7 +46,7 @@ export function Footer() {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-white mb-3">Análises</h4>
+          <h4 className="text-sm font-semibold text-white mb-3">{t('footer.analytics')}</h4>
           <ul className="space-y-2 text-sm text-slate-400">
             <li><Link to="/whales" className="hover:text-white">Whales</Link></li>
             <li><Link to="/news" className="hover:text-white">Notícias</Link></li>
@@ -52,7 +55,7 @@ export function Footer() {
         </div>
 
         <div>
-          <h4 className="text-sm font-semibold text-white mb-3">Legal</h4>
+          <h4 className="text-sm font-semibold text-white mb-3">{t('footer.legal')}</h4>
           <ul className="space-y-2 text-sm text-slate-400">
             <li><a href="#" className="hover:text-white">Termos de Uso</a></li>
             <li><a href="#" className="hover:text-white">Privacidade</a></li>
@@ -67,7 +70,7 @@ export function Footer() {
           <p>© 2026 CryptoNova. Todos os direitos reservados. Dados simulados para fins de demonstração.</p>
           <p className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Mercado ativo • Preços ao vivo
+            {t('footer.liveStatus')}
           </p>
         </div>
       </div>

@@ -27,7 +27,7 @@ function mapAuthenticatedUser(user: AuthUser): AuthenticatedUser {
     ...user,
     id: String(user.id),
     name: user.username,
-    balance: 10000,
+    balance: Number(user.balance ?? 10000),
   };
 }
 

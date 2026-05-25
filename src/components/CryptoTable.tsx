@@ -3,6 +3,7 @@ import { Crypto } from '../data/cryptoData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
 import { Sparkline, PercentChange, CryptoIcon, formatNumber } from './ui';
+import { useLanguage } from '../context/LanguageContext';
 import { Star, Zap } from 'lucide-react';
 
 interface CryptoTableProps {
@@ -14,6 +15,7 @@ interface CryptoTableProps {
 export function CryptoTable({ cryptos, watchlist, onToggleWatchlist }: CryptoTableProps) {
   const { format } = useCurrency();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   return (
     <div className="overflow-x-auto">
@@ -21,16 +23,16 @@ export function CryptoTable({ cryptos, watchlist, onToggleWatchlist }: CryptoTab
         <thead>
           <tr className="text-xs text-slate-400 border-b border-slate-800">
             <th className="text-left py-3 px-2 font-medium w-8"></th>
-            <th className="text-left py-3 px-2 font-medium w-12">#</th>
-            {user && <th className="text-center py-3 px-2 font-medium w-16 hidden md:table-cell">Ação</th>}
-            <th className="text-left py-3 px-2 font-medium">Nome</th>
-            <th className="text-right py-3 px-2 font-medium">Preço</th>
-            <th className="text-right py-3 px-2 font-medium hidden sm:table-cell">1h %</th>
-            <th className="text-right py-3 px-2 font-medium">24h %</th>
-            <th className="text-right py-3 px-2 font-medium hidden md:table-cell">7d %</th>
-            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell">Market Cap</th>
-            <th className="text-right py-3 px-2 font-medium hidden xl:table-cell">Volume (24h)</th>
-            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell">Últimos 7 dias</th>
+            <th className="text-left py-3 px-2 font-medium w-12">{t('table.rank')}</th>
+            {user && <th className="text-center py-3 px-2 font-medium w-16 hidden md:table-cell">{t('common.action')}</th>}
+            <th className="text-left py-3 px-2 font-medium">{t('table.name')}</th>
+            <th className="text-right py-3 px-2 font-medium">{t('table.price')}</th>
+            <th className="text-right py-3 px-2 font-medium hidden sm:table-cell">{t('table.change1h')}</th>
+            <th className="text-right py-3 px-2 font-medium">{t('table.change24h')}</th>
+            <th className="text-right py-3 px-2 font-medium hidden md:table-cell">{t('table.change7d')}</th>
+            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell">{t('table.marketCap')}</th>
+            <th className="text-right py-3 px-2 font-medium hidden xl:table-cell">{t('table.volume')}</th>
+            <th className="text-right py-3 px-2 font-medium hidden lg:table-cell">{t('table.last7d')}</th>
           </tr>
         </thead>
         <tbody>
@@ -58,7 +60,7 @@ export function CryptoTable({ cryptos, watchlist, onToggleWatchlist }: CryptoTab
                       className="inline-flex items-center gap-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 px-2 py-1 rounded"
                     >
                       <Zap className="w-3 h-3" />
-                      Trade
+                      {t('common.trade')}
                     </Link>
                   </td>
                 )}

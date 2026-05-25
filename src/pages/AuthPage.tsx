@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Eye, EyeOff, Mail, Lock, User as UserIcon, TrendingUp, DollarSign, BarChart3, Shield } from 'lucide-react';
 
 type Mode = 'login' | 'register';
@@ -9,6 +10,7 @@ type Mode = 'login' | 'register';
 export function AuthPage() {
   const { login, register, user } = useAuth();
   const notify = useNotification();
+  const { t } = useLanguage();
   const [mode, setMode] = useState<Mode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,27 +32,27 @@ export function AuthPage() {
         const result = await login(email, password);
 
         if (result.success) {
-          notify.success('Bem-vindo de volta!', 'Sessão validada com segurança no backend PHP.');
+          notify.success(t('auth.welcome'), t('auth.loginSuccess'));
           window.location.href = '/portfolio';
         } else {
-          notify.error('Erro no login', result.error || 'Não foi possível autenticar.');
+          notify.error(t('common.error'), result.error || t('auth.loginError'));
         }
 
         return;
       }
 
       if (password !== confirmPassword) {
-        notify.error('Erro', 'As senhas não coincidem');
+        notify.error(t('common.error'), t('auth.passwordMismatch'));
         return;
       }
 
       const result = await register(name, email, password);
 
       if (result.success) {
-        notify.success('Conta criada! 🎉', 'Seu acesso foi configurado no backend PHP e o token JWT foi salvo na sessão atual.');
+        notify.success(t('auth.accountCreated'), t('auth.accountCreatedDesc'));
         window.location.href = '/portfolio';
       } else {
-        notify.error('Erro no cadastro', result.error || 'Não foi possível concluir o cadastro.');
+        notify.error(t('common.error'), result.error || t('auth.registrationError'));
       }
     } finally {
       setIsLoading(false);
@@ -62,19 +64,19 @@ export function AuthPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
         <div className="hidden md:block">
           <div className="inline-block px-4 py-1.5 bg-indigo-500/10 border border-indigo-500/30 rounded-full text-indigo-400 text-sm font-medium mb-6">
-            Autenticação real com PHP + MySQL
+            {t('auth.badge')}
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            {mode === 'login' ? 'Bem-vindo de volta!' : 'Crie sua conta'}
+            {mode === 'login' ? t('auth.welcome') : t('auth.createAccount')}
           </h1>
           <p className="text-slate-400 text-lg mb-8">
-            Entre ou cadastre-se com um fluxo seguro, validado no backend e protegido por JWT.
+            {t('auth.subtitle')}
           </p>
 
           <div className="space-y-4">
-            <Feature icon={<DollarSign className="w-5 h-5" />} title="Trade com Facilidade" desc="Compre e venda criptomoedas com taxas baixas (0.1%)" />
-            <Feature icon={<BarChart3 className="w-5 h-5" />} title="Dados Persistentes" desc="Usuário salvo em MySQL com sessão validada pelo backend" />
-            <Feature icon={<Shield className="w-5 h-5" />} title="Segurança Total" desc="JWT, hash de senha e validação server-side" />
+            <Feature icon={<DollarSign className="w-5 h-5" />} title={t('auth.featureTradeTitle')} desc={t('auth.featureTradeDesc')} />
+            <Feature icon={<BarChart3 className="w-5 h-5" />} title={t('auth.featureDataTitle')} desc={t('auth.featureDataDesc')} />
+            <Feature icon={<Shield className="w-5 h-5" />} title={t('auth.featureSecurityTitle')} desc={t('auth.featureSecurityDesc')} />
           </div>
         </div>
 
@@ -95,7 +97,7 @@ export function AuthPage() {
                 mode === 'login' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Entrar
+              {t('auth.login')}
             </button>
             <button
               onClick={() => setMode('register')}
@@ -103,14 +105,14 @@ export function AuthPage() {
                 mode === 'register' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              Cadastrar
+              {t('auth.register')}
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Nome</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('auth.name')}</label>
                 <div className="relative">
                   <UserIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
@@ -119,14 +121,14 @@ export function AuthPage() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
-                    placeholder="Seu nome"
+                    placeholder={t('auth.namePlaceholder')}
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('auth.email')}</label>
               <div className="relative">
                 <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
@@ -135,13 +137,13 @@ export function AuthPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
-                  placeholder="seu@email.com"
+                  placeholder={t('auth.emailPlaceholder')}
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1.5">Senha</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('auth.password')}</label>
               <div className="relative">
                 <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
@@ -151,8 +153,8 @@ export function AuthPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-10 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
-                  placeholder="••••••••"
-                  title="Use pelo menos 8 caracteres, incluindo maiúscula, minúscula, número e símbolo."
+                  placeholder={t('auth.passwordPlaceholder')}
+                  title={t('auth.passwordHint')}
                 />
                 <button
                   type="button"
@@ -166,7 +168,7 @@ export function AuthPage() {
 
             {mode === 'register' && (
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">Confirmar Senha</label>
+                <label className="block text-sm font-medium text-slate-300 mb-1.5">{t('auth.confirmPassword')}</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                   <input
@@ -176,7 +178,7 @@ export function AuthPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
-                    placeholder="••••••••"
+                    placeholder={t('auth.passwordPlaceholder')}
                   />
                 </div>
               </div>
@@ -187,22 +189,22 @@ export function AuthPage() {
               disabled={isLoading}
               className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Processando...' : mode === 'login' ? 'Entrar' : 'Cadastrar'}
+              {isLoading ? t('auth.processing') : mode === 'login' ? t('auth.login') : t('auth.register')}
             </button>
 
             <p className="text-center text-sm text-slate-400 pt-2">
               {mode === 'login' ? (
                 <>
-                  Não tem uma conta?{' '}
+                  {t('auth.noAccount')}{' '}
                   <button type="button" onClick={() => setMode('register')} className="text-indigo-400 hover:text-indigo-300">
-                    Cadastre-se
+                    {t('auth.register')}
                   </button>
                 </>
               ) : (
                 <>
-                  Já tem uma conta?{' '}
+                  {t('auth.hasAccount')}{' '}
                   <button type="button" onClick={() => setMode('login')} className="text-indigo-400 hover:text-indigo-300">
-                    Entrar
+                    {t('auth.login')}
                   </button>
                 </>
               )}
@@ -210,9 +212,7 @@ export function AuthPage() {
 
             {mode === 'register' && (
               <div className="bg-gradient-to-r from-slate-500/10 to-indigo-500/10 border border-slate-500/30 rounded-lg p-3 text-xs text-slate-300">
-                🔐 <strong className="text-indigo-400">Autenticação real</strong> com PHP + MySQL.
-                <br />
-                <span className="text-slate-400">JWT, hash seguro de senha e validação no servidor.</span>
+                🔐 <strong className="text-indigo-400">{t('auth.realAuth')}</strong> {t('auth.realAuthDesc')}
               </div>
             )}
           </form>

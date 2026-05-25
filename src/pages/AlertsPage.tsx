@@ -4,6 +4,7 @@ import { cryptos } from '../data/cryptoData';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Bell, Plus, Trash2, CheckCircle2, AlertCircle, BellOff, BellRing } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { AlertRecord } from '../services/database';
@@ -13,6 +14,7 @@ export function AlertsPage() {
   const { alerts, addAlert, removeAlert, toggleAlert, isLoading } = useAlerts();
   const { format } = useCurrency();
   const notify = useNotification();
+  const { t, formatDateTime } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     cryptoId: 'bitcoin',
@@ -25,7 +27,7 @@ export function AlertsPage() {
   const handleAdd = async () => {
     const val = parseFloat(form.value);
     if (!val || val <= 0) {
-      notify.error('Valor inválido', 'Digite um valor numérico válido');
+      notify.error(t('alerts.invalidValue'), t('alerts.enterValidNumber'));
       return;
     }
     const crypto = cryptos.find((c) => c.id === form.cryptoId);
@@ -40,11 +42,11 @@ export function AlertsPage() {
     });
 
     if (result?.success) {
-      notify.success('Alerta criado!', `Você será notificado quando ${crypto.symbol} atingir o valor definido`);
+      notify.success(t('alerts.created'), `${t('alerts.notifyWhen')} ${crypto.symbol} ${t('alerts.reachTarget')}`);
       setForm({ cryptoId: 'bitcoin', type: 'price_above', value: '' });
       setShowForm(false);
     } else {
-      notify.error('Erro ao criar alerta', result?.error);
+      notify.error(t('common.error'), result?.error);
     }
   };
 
@@ -52,7 +54,7 @@ export function AlertsPage() {
     if ('Notification' in window) {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
-        notify.success('Notificações ativadas!');
+        notify.success(t('alerts.activated'));
       }
     }
   };
@@ -67,16 +69,16 @@ export function AlertsPage() {
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
             <Bell className="w-8 h-8 text-yellow-400" />
-            Alertas de Preço
+            {t('alerts.title')}
           </h1>
-          <p className="text-slate-400">Seja notificado quando condições específicas forem atendidas</p>
+          <p className="text-slate-400">{t('alerts.subtitle')}</p>
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
           className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
-          Novo Alerta
+          {t('alerts.newAlert')}
         </button>
       </div>
 
@@ -85,22 +87,22 @@ export function AlertsPage() {
           <div className="flex items-center gap-3">
             <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
             <div>
-              <div className="text-sm font-medium text-white">Ative as notificações</div>
-              <div className="text-xs text-slate-400">Permita notificações no navegador para receber alertas em tempo real</div>
+              <div className="text-sm font-medium text-white">{t('alerts.activateNotifications')}</div>
+              <div className="text-xs text-slate-400">{t('alerts.enableNotifications')}</div>
             </div>
           </div>
           <button
             onClick={requestPermission}
             className="bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium px-4 py-1.5 rounded-lg"
           >
-            Ativar
+            {t('common.activate')}
           </button>
         </div>
       )}
 
       {showForm && (
         <div className="bg-slate-900/60 border border-indigo-500/30 rounded-xl p-5 mb-6">
-          <h3 className="text-white font-semibold mb-4">Criar Novo Alerta</h3>
+          <h3 className="text-white font-semibold mb-4">{t('alerts.createAlert')}</h3>
           <div className="grid md:grid-cols-4 gap-3">
             <select
               value={form.cryptoId}
@@ -118,10 +120,10 @@ export function AlertsPage() {
               onChange={(e) => setForm({ ...form, type: e.target.value as AlertRecord['type'] })}
               className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500"
             >
-              <option value="price_above">Preço acima de</option>
-              <option value="price_below">Preço abaixo de</option>
-              <option value="change_up">Subiu mais que %</option>
-              <option value="change_down">Caiu mais que %</option>
+              <option value="price_above">{t('alerts.priceAbove')}</option>
+              <option value="price_below">{t('alerts.priceBelow')}</option>
+              <option value="change_up">{t('alerts.changeUp')}</option>
+              <option value="change_down">{t('alerts.changeDown')}</option>
             </select>
             <input
               type="number"
@@ -135,7 +137,7 @@ export function AlertsPage() {
                 onClick={handleAdd}
                 className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2 rounded-lg"
               >
-                Criar
+                {t('alerts.create')}
               </button>
               <button
                 onClick={() => setShowForm(false)}
@@ -152,21 +154,21 @@ export function AlertsPage() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <BellRing className="w-4 h-4 text-indigo-400" />
-            <span className="text-xs text-slate-400">Ativos</span>
+            <span className="text-xs text-slate-400">{t('alerts.active')}</span>
           </div>
           <div className="text-2xl font-bold text-white">{activeAlerts.length}</div>
         </div>
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs text-slate-400">Disparados</span>
+            <span className="text-xs text-slate-400">{t('alerts.triggered')}</span>
           </div>
           <div className="text-2xl font-bold text-white">{triggeredAlerts.length}</div>
         </div>
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-1">
             <BellOff className="w-4 h-4 text-slate-500" />
-            <span className="text-xs text-slate-400">Pausados</span>
+            <span className="text-xs text-slate-400">{t('alerts.paused')}</span>
           </div>
           <div className="text-2xl font-bold text-white">{inactiveAlerts.length}</div>
         </div>
@@ -175,19 +177,19 @@ export function AlertsPage() {
       {isLoading ? (
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-12 text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto"></div>
-          <p className="text-slate-400 mt-4">Carregando alertas do banco...</p>
+          <p className="text-slate-400 mt-4">{t('alerts.loadingAlerts')}</p>
         </div>
       ) : alerts.length === 0 ? (
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center">
           <Bell className="w-16 h-16 mx-auto mb-4 text-slate-700" />
-          <h3 className="text-lg font-semibold text-white mb-2">Nenhum alerta configurado</h3>
-          <p className="text-slate-400 mb-4">Crie seu primeiro alerta para ser notificado sobre mudanças no mercado</p>
+          <h3 className="text-lg font-semibold text-white mb-2">{t('alerts.noneConfigured')}</h3>
+          <p className="text-slate-400 mb-4">{t('alerts.createFirst')}</p>
           <button
             onClick={() => setShowForm(true)}
             className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium px-4 py-2 rounded-lg"
           >
             <Plus className="w-4 h-4" />
-            Criar Alerta
+            {t('alerts.createAlert')}
           </button>
         </div>
       ) : (
@@ -214,10 +216,10 @@ export function AlertsPage() {
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className="text-white font-medium">{alert.symbol}</span>
                     <span className="text-xs text-slate-400">
-                      {alert.type === 'price_above' && 'Preço acima de'}
-                      {alert.type === 'price_below' && 'Preço abaixo de'}
-                      {alert.type === 'change_up' && '↑ Mais que'}
-                      {alert.type === 'change_down' && '↓ Mais que'}
+                      {alert.type === 'price_above' && t('alerts.priceAbove')}
+                      {alert.type === 'price_below' && t('alerts.priceBelow')}
+                      {alert.type === 'change_up' && t('alerts.changeUp')}
+                      {alert.type === 'change_down' && t('alerts.changeDown')}
                     </span>
                     <span className="text-white font-semibold">
                       {alert.type.includes('change') ? `${alert.value}%` : format(alert.value, { maxDecimals: alert.value < 1 ? 6 : 2 })}
@@ -227,17 +229,17 @@ export function AlertsPage() {
                     {isTriggered ? (
                       <span className="text-emerald-400 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
-                        Disparado em {new Date(alert.triggeredAt!).toLocaleString('pt-BR')}
+                        {t('alerts.triggeredAt', { date: formatDateTime(alert.triggeredAt!) })}
                       </span>
                     ) : (
-                      <span>Criado em {new Date(alert.createdAt).toLocaleString('pt-BR')}</span>
+                      <span>{t('alerts.createdAt', { date: formatDateTime(alert.createdAt) })}</span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {isTriggered ? (
                     <span className="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
-                      ✓ Disparado
+                      ✓ {t('alerts.triggeredBadge')}
                     </span>
                   ) : (
                     <button
@@ -246,7 +248,7 @@ export function AlertsPage() {
                         isPaused ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-indigo-500/20 text-indigo-400'
                       }`}
                     >
-                      {isPaused ? 'Pausado' : 'Ativo'}
+                      {isPaused ? t('alerts.pausedBadge') : t('alerts.activeBadge')}
                     </button>
                   )}
                   <button

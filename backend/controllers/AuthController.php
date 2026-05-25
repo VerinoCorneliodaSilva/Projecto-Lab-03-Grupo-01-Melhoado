@@ -55,6 +55,8 @@ class AuthController
             'role' => 'user',
         ]);
 
+        $this->userModel->createWallet((int) $userId);
+
         $createdUser = $this->userModel->findById((int) $userId);
 
         if ($createdUser === null) {
@@ -142,6 +144,7 @@ class AuthController
             'email' => (string) $user['email'],
             'avatar' => $user['avatar'] !== null ? (string) $user['avatar'] : null,
             'role' => (string) $user['role'],
+            'balance' => (float) ($user['balance'] ?? 10000.0),
             'createdAt' => (string) $user['created_at'],
             'updatedAt' => (string) $user['updated_at'],
         ];

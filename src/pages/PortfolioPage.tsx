@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
+import { useLanguage } from '../context/LanguageContext';
 import { useRealtimePrices } from '../hooks/useRealtimePrices';
 import { usePortfolio } from '../hooks/usePortfolio';
 import { CryptoIcon, PercentChange } from '../components/ui';
@@ -11,8 +12,9 @@ import { TrendingUp, TrendingDown, Wallet, PieChart, ArrowUpRight, ArrowDownRigh
 export function PortfolioPage() {
   const { user } = useAuth();
   const { format } = useCurrency();
+  const { t, formatDateTime, formatDate } = useLanguage();
   const { cryptos } = useRealtimePrices();
-  const { holdings, transactions } = usePortfolio();
+  const { holdings, transactions, snapshots } = usePortfolio();
 
   if (!user) return <Navigate to="/auth" replace />;
 
@@ -34,6 +36,32 @@ export function PortfolioPage() {
     return { holdingsData, totalInvested, totalCurrentValue, totalProfit, totalProfitPercent };
   }, [holdings, cryptos]);
 
+  const portfolioHistory = useMemo(() => {
+    const history = snapshots
+      .slice()
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      .map((snapshot) => ({
+        date: formatDate(snapshot.createdAt, { day: '2-digit', month: 'short' }),
+        value: Number(snapshot.currentValue.toFixed(2)),
+      }));
+
+    if (history.length === 0) {
+      return [];
+    }
+
+    const lastPoint = history[history.length - 1];
+    const currentPortfolioValue = Number((portfolioData.totalCurrentValue + user.balance).toFixed(2));
+
+    if (lastPoint.value !== currentPortfolioValue) {
+      history.push({
+        date: formatDate(new Date(), { day: '2-digit', month: 'short' }),
+        value: currentPortfolioValue,
+      });
+    }
+
+    return history;
+  }, [portfolioData.totalCurrentValue, snapshots, user.balance]);
+
   const totalPortfolioValue = user.balance + portfolioData.totalCurrentValue;
   const distributionData = portfolioData.holdingsData.map((h: any) => ({
     name: h.symbol,
@@ -46,16 +74,16 @@ export function PortfolioPage() {
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
           <Wallet className="w-8 h-8 text-indigo-400" />
-          Meu Portfólio
+          {t('portfolio.title')}
         </h1>
-        <p className="text-slate-400">Olá, {user.name}! Aqui está o resumo do seu portfólio.</p>
+        <p className="text-slate-400">{t('portfolio.greeting', { name: user.name })}</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="Valor Total" value={format(totalPortfolioValue, { compact: true })} icon={<DollarSign className="w-5 h-5 text-emerald-400" />} trend={portfolioData.totalProfitPercent} />
-        <StatCard label="Saldo Disponível" value={format(user.balance)} icon={<Wallet className="w-5 h-5 text-indigo-400" />} />
-        <StatCard label="Valor Investido" value={format(portfolioData.totalInvested, { compact: true })} icon={<PieChart className="w-5 h-5 text-purple-400" />} />
-        <StatCard label="Lucro/Prejuízo" value={format(portfolioData.totalProfit)} trend={portfolioData.totalProfitPercent} icon={portfolioData.totalProfit >= 0 ? <TrendingUp className="w-5 h-5 text-emerald-400" /> : <TrendingDown className="w-5 h-5 text-red-400" />} />
+        <StatCard label={t('portfolio.totalValue')} value={format(totalPortfolioValue, { compact: true })} icon={<DollarSign className="w-5 h-5 text-emerald-400" />} trend={portfolioData.totalProfitPercent} />
+        <StatCard label={t('portfolio.balance')} value={format(user.balance)} icon={<Wallet className="w-5 h-5 text-indigo-400" />} />
+        <StatCard label={t('portfolio.invested')} value={format(portfolioData.totalInvested, { compact: true })} icon={<PieChart className="w-5 h-5 text-purple-400" />} />
+        <StatCard label={t('portfolio.profit')} value={format(portfolioData.totalProfit)} trend={portfolioData.totalProfitPercent} icon={portfolioData.totalProfit >= 0 ? <TrendingUp className="w-5 h-5 text-emerald-400" /> : <TrendingDown className="w-5 h-5 text-red-400" />} />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6 mb-8">
@@ -63,13 +91,13 @@ export function PortfolioPage() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-white font-semibold flex items-center gap-2">
               <Activity className="w-4 h-4 text-indigo-400" />
-              Performance do Portfólio
+              {t('portfolio.performance')}
             </h3>
           </div>
           <div className="h-64">
-            {portfolioData.holdingsData.length > 0 ? (
+            {portfolioHistory.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={generatePortfolioHistory(portfolioData.totalCurrentValue)}>
+                <AreaChart data={portfolioHistory}>
                   <defs>
                     <linearGradient id="portfolioGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
@@ -90,7 +118,7 @@ export function PortfolioPage() {
               <div className="h-full flex items-center justify-center text-slate-500">
                 <div className="text-center">
                   <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Faça sua primeira compra para ver o gráfico</p>
+                  <p className="text-sm">{t('portfolio.chartPlaceholder')}</p>
                 </div>
               </div>
             )}
@@ -100,7 +128,7 @@ export function PortfolioPage() {
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-5">
           <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
             <PieChart className="w-4 h-4 text-indigo-400" />
-            Distribuição
+            {t('portfolio.distribution')}
           </h3>
           {distributionData.length > 0 ? (
             <div className="space-y-3">
@@ -122,7 +150,7 @@ export function PortfolioPage() {
           ) : (
             <div className="text-center text-slate-500 py-8">
               <PieChart className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Nenhum ativo ainda</p>
+              <p className="text-sm">{t('portfolio.noAssets')}</p>
             </div>
           )}
         </div>
@@ -132,17 +160,17 @@ export function PortfolioPage() {
         <div className="p-4 border-b border-slate-800">
           <h3 className="text-white font-semibold flex items-center gap-2">
             <History className="w-4 h-4 text-indigo-400" />
-            Histórico de Transações ({transactions.length})
+            {t('portfolio.history')} ({transactions.length})
           </h3>
         </div>
 
         {transactions.length === 0 ? (
           <div className="p-12 text-center">
             <Wallet className="w-16 h-16 mx-auto mb-4 text-slate-700" />
-            <h3 className="text-lg font-medium text-white mb-2">Você ainda não possui transações</h3>
-            <p className="text-slate-400 mb-4">Comece a negociar agora e construa seu portfólio</p>
+            <h3 className="text-lg font-medium text-white mb-2">{t('portfolio.noTransactions')}</h3>
+            <p className="text-slate-400 mb-4">{t('portfolio.buildPortfolio')}</p>
             <Link to="/" className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium px-4 py-2 rounded-lg">
-              Explorar Mercado
+              {t('portfolio.exploreMarket')}
               <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
@@ -151,13 +179,13 @@ export function PortfolioPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-slate-400 border-b border-slate-800">
-                  <th className="text-left py-3 px-4 font-medium">Data</th>
-                  <th className="text-left py-3 px-4 font-medium">Tipo</th>
-                  <th className="text-left py-3 px-4 font-medium">Ativo</th>
-                  <th className="text-right py-3 px-4 font-medium">Quantidade</th>
-                  <th className="text-right py-3 px-4 font-medium">Preço</th>
-                  <th className="text-right py-3 px-4 font-medium">Total</th>
-                  <th className="text-right py-3 px-4 font-medium hidden sm:table-cell">Taxa</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('common.date')}</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('common.type')}</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('common.asset')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('common.quantity')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('common.price')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('common.total')}</th>
+                  <th className="text-right py-3 px-4 font-medium hidden sm:table-cell">{t('common.fee')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,14 +194,14 @@ export function PortfolioPage() {
                   return (
                     <tr key={tx.id} className="border-b border-slate-800/60 hover:bg-slate-900/60">
                       <td className="py-3 px-4 text-slate-400 text-xs">
-                        {new Date(tx.timestamp).toLocaleString('pt-BR')}
+                        {formatDateTime(tx.timestamp)}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                           tx.type === 'buy' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
                         }`}>
                           {tx.type === 'buy' ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                          {tx.type === 'buy' ? 'Compra' : 'Venda'}
+                          {tx.type === 'buy' ? t('portfolio.buy') : t('portfolio.sell')}
                         </span>
                       </td>
                       <td className="py-3 px-4">
@@ -200,20 +228,20 @@ export function PortfolioPage() {
           <div className="p-4 border-b border-slate-800">
             <h3 className="text-white font-semibold flex items-center gap-2">
               <PieChart className="w-4 h-4 text-indigo-400" />
-              Suas Posições ({portfolioData.holdingsData.length})
+              {t('portfolio.positions')} ({portfolioData.holdingsData.length})
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-xs text-slate-400 border-b border-slate-800">
-                  <th className="text-left py-3 px-4 font-medium">Ativo</th>
-                  <th className="text-right py-3 px-4 font-medium">Quantidade</th>
-                  <th className="text-right py-3 px-4 font-medium hidden sm:table-cell">Preço Médio</th>
-                  <th className="text-right py-3 px-4 font-medium">Preço Atual</th>
-                  <th className="text-right py-3 px-4 font-medium">Valor</th>
-                  <th className="text-right py-3 px-4 font-medium">P/L</th>
-                  <th className="text-right py-3 px-4 font-medium">Ações</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('common.asset')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('common.quantity')}</th>
+                  <th className="text-right py-3 px-4 font-medium hidden sm:table-cell">{t('portfolio.avgPrice')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('portfolio.currentPrice')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('portfolio.value')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('portfolio.pnl')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('common.action')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -240,9 +268,50 @@ export function PortfolioPage() {
                     </td>
                     <td className="py-4 px-4 text-right">
                       <Link to={`/trade/${h.cryptoId}`} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">
-                        Negociar
+                        {t('portfolio.trade')}
                       </Link>
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {snapshots.length > 0 && (
+        <div className="mt-8 bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden">
+          <div className="p-4 border-b border-slate-800">
+            <h3 className="text-white font-semibold flex items-center gap-2">
+              <Activity className="w-4 h-4 text-indigo-400" />
+              {t('portfolio.events')}
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-slate-400 border-b border-slate-800">
+                  <th className="text-left py-3 px-4 font-medium">{t('common.date')}</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('common.type')}</th>
+                  <th className="text-left py-3 px-4 font-medium">{t('common.asset')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('common.quantity')}</th>
+                  <th className="text-right py-3 px-4 font-medium">{t('portfolio.value')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snapshots.slice(-10).reverse().map((snapshot) => (
+                  <tr key={snapshot.id} className="border-b border-slate-800/60 hover:bg-slate-900/60">
+                    <td className="py-3 px-4 text-slate-400 text-xs">{formatDateTime(snapshot.createdAt)}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                        snapshot.snapshotType === 'buy' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'
+                      }`}>
+                        {snapshot.snapshotType === 'buy' ? t('portfolio.buy') : t('portfolio.sell')}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-slate-200">{snapshot.symbol}</td>
+                    <td className="py-3 px-4 text-right text-slate-100">{snapshot.amount.toFixed(6)}</td>
+                    <td className="py-3 px-4 text-right text-slate-100 font-medium">{format(snapshot.currentValue)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -271,20 +340,3 @@ function StatCard({ label, value, icon, trend }: { label: string; value: string;
   );
 }
 
-function generatePortfolioHistory(currentValue: number) {
-  const points = 30;
-  const data = [];
-  let value = currentValue * 0.8;
-  for (let i = points; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    value = value + (Math.random() - 0.4) * currentValue * 0.02;
-    value = Math.max(0, value);
-    data.push({
-      date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-      value: Number(value.toFixed(2)),
-    });
-  }
-  data[data.length - 1].value = currentValue;
-  return data;
-}

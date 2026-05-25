@@ -1,9 +1,11 @@
 import { eventsData, categoryLabels } from '../data/eventsData';
 import { Calendar as CalendarIcon, Flame, Filter } from 'lucide-react';
 import { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export function CalendarPage() {
   const [filter, setFilter] = useState<string>('all');
+  const { t, formatDate } = useLanguage();
 
   const filtered = eventsData.filter((e) => filter === 'all' || e.category === filter);
   const sorted = [...filtered].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -16,16 +18,16 @@ export function CalendarPage() {
     high: 'bg-red-500/10 text-red-400 border-red-500/30',
   };
 
-  const impactLabels = { low: 'Baixo', medium: 'Médio', high: 'Alto' };
+  const impactLabels = { low: t('calendar.low'), medium: t('calendar.medium'), high: t('calendar.high') };
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-3">
           <CalendarIcon className="w-8 h-8 text-indigo-400" />
-          Calendário Cripto
+          {t('calendar.title')}
         </h1>
-        <p className="text-slate-400">Próximos eventos importantes do ecossistema cripto</p>
+        <p className="text-slate-400">{t('calendar.subtitle')}</p>
       </div>
 
       {/* Filter */}
@@ -37,7 +39,7 @@ export function CalendarPage() {
             filter === 'all' ? 'bg-indigo-500 text-white' : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-white'
           }`}
         >
-          Todos
+          {t('calendar.filterAll')}
         </button>
         {categories.map((cat) => (
           <button
@@ -74,7 +76,7 @@ export function CalendarPage() {
                         {categoryLabels[event.category]}
                       </span>
                       <span className={`text-xs px-2 py-0.5 rounded-full border ${impactColors[event.impact]}`}>
-                        Impacto {impactLabels[event.impact]}
+                        {t('calendar.impact', { level: impactLabels[event.impact] })}
                       </span>
                       {event.crypto && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">
@@ -84,16 +86,16 @@ export function CalendarPage() {
                       {isSoon && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 flex items-center gap-1">
                           <Flame className="w-3 h-3" />
-                          Em breve
+                          {t('calendar.soon')}
                         </span>
                       )}
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-bold text-white">
-                        {date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}
+                        {formatDate(date, { day: '2-digit', month: 'long', year: 'numeric' })}
                       </div>
                       <div className={`text-xs ${isSoon ? 'text-orange-400' : 'text-slate-500'}`}>
-                        {daysLeft > 0 ? `em ${daysLeft} dia${daysLeft > 1 ? 's' : ''}` : 'Hoje'}
+                        {daysLeft > 0 ? t('calendar.inDays', { days: daysLeft, plural: daysLeft > 1 ? 's' : '' }) : t('calendar.today')}
                       </div>
                     </div>
                   </div>
