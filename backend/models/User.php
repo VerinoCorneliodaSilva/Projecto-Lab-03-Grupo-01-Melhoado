@@ -40,6 +40,17 @@ class User
         $statement->execute();
     }
 
+    public function updatePassword(int $userId, string $passwordHash): void
+    {
+        $statement = $this->pdo->prepare('UPDATE users
+            SET password = :password, updated_at = NOW()
+            WHERE id = :id');
+
+        $statement->bindValue(':password', $passwordHash);
+        $statement->bindValue(':id', $userId, PDO::PARAM_INT);
+        $statement->execute();
+    }
+
     public function getWalletBalance(int $userId): float
     {
         $statement = $this->pdo->prepare('SELECT available_balance FROM user_wallets WHERE user_id = :user_id LIMIT 1');

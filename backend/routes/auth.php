@@ -28,6 +28,10 @@ class AuthRoutes
                 $controller->logout();
                 break;
 
+            case 'auth/change-password':
+                $controller->changePassword();
+                break;
+
             default:
                 jsonResponse(false, 'Rota não encontrada', 404, [], 'Rota não encontrada');
                 break;

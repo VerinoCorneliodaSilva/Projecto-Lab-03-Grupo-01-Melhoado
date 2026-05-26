@@ -4,7 +4,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { currencies, CurrencyCode } from '../data/cryptoData';
 import { Settings as SettingsIcon, Sun, Moon, Globe, DollarSign, User, Shield, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 
 const languages: { code: Language; name: string; flag: string }[] = [
@@ -139,9 +139,12 @@ export function SettingsPage() {
                 <div className="text-sm font-medium text-white">{t('settings.changePassword')}</div>
                 <div className="text-xs text-slate-400">{t('settings.changePasswordDesc')}</div>
               </div>
-              <button className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg">
+              <Link
+                to="/recover-password"
+                className="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg"
+              >
                 {t('common.edit')}
-              </button>
+              </Link>
             </div>
           </div>
         </SettingsSection>

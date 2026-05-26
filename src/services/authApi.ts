@@ -20,6 +20,12 @@ export interface AuthValidateResponse {
   user: AuthUser;
 }
 
+export interface ChangePasswordPayload {
+  currentPassword?: string;
+  email?: string;
+  newPassword: string;
+}
+
 export async function registerUser(name: string, email: string, password: string): Promise<HttpResponse<AuthLoginResponse>> {
   return httpClient.post<AuthLoginResponse>('/auth/register', {
     username: name,
@@ -37,6 +43,10 @@ export async function loginUser(email: string, password: string): Promise<HttpRe
 
 export async function validateAuthToken(): Promise<HttpResponse<AuthValidateResponse>> {
   return httpClient.get<AuthValidateResponse>('/auth/validate');
+}
+
+export async function changePasswordUser(payload: ChangePasswordPayload): Promise<HttpResponse<{ message: string }>> {
+  return httpClient.post<{ message: string }>('/auth/change-password', payload);
 }
 
 export async function logoutUser(): Promise<HttpResponse<{ message: string }>> {

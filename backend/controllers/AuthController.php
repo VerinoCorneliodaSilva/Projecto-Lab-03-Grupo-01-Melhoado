@@ -128,6 +128,51 @@ class AuthController
         jsonResponse(true, 'Logout realizado com sucesso', 200, []);
     }
 
+    public function changePassword(): void
+    {
+        $body = $this->getJsonInput();
+        $email = sanitizeEmail($body['email'] ?? '');
+        $currentPassword = (string) ($body['currentPassword'] ?? '');
+        $newPassword = (string) ($body['newPassword'] ?? '');
+
+        if ($newPassword === '' || !validateStrongPassword($newPassword)) {
+            jsonResponse(false, 'Dados inválidos', 422, [], 'Dados inválidos');
+        }
+
+        $user = null;
+
+        if ($email !== '' && $currentPassword === '') {
+            $user = $this->userModel->findByEmail($email);
+
+            if ($user === null) {
+                jsonResponse(false, 'Usuário não encontrado', 404, [], 'Usuário não encontrado');
+            }
+
+            $this->userModel->updatePassword((int) $user['id'], password_hash($newPassword, PASSWORD_BCRYPT));
+
+            jsonResponse(true, 'Senha alterada com sucesso', 200, [
+                'message' => 'Senha alterada com sucesso',
+            ]);
+        }
+
+        $payload = AuthMiddleware::authenticate();
+        $user = $this->userModel->findById((int) $payload['sub']);
+
+        if ($user === null) {
+            jsonResponse(false, 'Usuário não encontrado', 404, [], 'Usuário não encontrado');
+        }
+
+        if (!password_verify($currentPassword, (string) $user['password'])) {
+            jsonResponse(false, 'Senha incorreta', 401, [], 'Senha incorreta');
+        }
+
+        $this->userModel->updatePassword((int) $user['id'], password_hash($newPassword, PASSWORD_BCRYPT));
+
+        jsonResponse(true, 'Senha alterada com sucesso', 200, [
+            'message' => 'Senha alterada com sucesso',
+        ]);
+    }
+
     private function getJsonInput(): array
     {
         $rawBody = file_get_contents('php://input');

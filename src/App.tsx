@@ -17,6 +17,7 @@ import { AuthPage } from './pages/AuthPage';
 import { PortfolioPage } from './pages/PortfolioPage';
 import { TradePage } from './pages/TradePage';
 import { SettingsPage } from './pages/SettingsPage';
+import { RecoverPasswordPage } from './pages/RecoverPasswordPage';
 import { HeatmapPage } from './pages/HeatmapPage';
 import { NewsPage } from './pages/NewsPage';
 import { AlertsPage } from './pages/AlertsPage';
@@ -52,6 +53,7 @@ function AppShell() {
             <Route path="/portfolio" element={<ProtectedRoute><PortfolioPage /></ProtectedRoute>} />
             <Route path="/trade/:id" element={<ProtectedRoute><TradePage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            <Route path="/recover-password" element={<RecoverPasswordPage />} />
             <Route path="/heatmap" element={<HeatmapPage />} />
             <Route path="/news" element={<NewsPage />} />
             <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
