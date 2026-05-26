@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -7,15 +7,24 @@ import { useNotification } from '../context/NotificationContext';
 import { changePasswordUser } from '../services/authApi';
 
 export function RecoverPasswordPage() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading, logout } = useAuth();
   const { t } = useLanguage();
   const notify = useNotification();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setEmail('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+    setShowNewPassword(false);
+    setShowConfirmNewPassword(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,9 +49,8 @@ export function RecoverPasswordPage() {
 
       if (result.success) {
         notify.success(t('auth.passwordUpdatedTitle'), t('auth.passwordUpdatedDesc'));
-        setEmail('');
-        setNewPassword('');
-        setConfirmNewPassword('');
+        await logout();
+        navigate('/auth');
         return;
       }
 
@@ -111,6 +119,7 @@ export function RecoverPasswordPage() {
               <input
                 type="email"
                 required
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -127,6 +136,7 @@ export function RecoverPasswordPage() {
                 type={showNewPassword ? 'text' : 'password'}
                 required
                 minLength={8}
+                autoComplete="off"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-10 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -151,6 +161,7 @@ export function RecoverPasswordPage() {
                 type={showConfirmNewPassword ? 'text' : 'password'}
                 required
                 minLength={8}
+                autoComplete="off"
                 value={confirmNewPassword}
                 onChange={(e) => setConfirmNewPassword(e.target.value)}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-10 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"

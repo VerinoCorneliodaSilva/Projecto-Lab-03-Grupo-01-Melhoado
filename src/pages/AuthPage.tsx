@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
@@ -19,6 +19,14 @@ export function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setName('');
+    setConfirmPassword('');
+    setShowPassword(false);
+  }, [mode]);
 
   if (user) {
     return <Navigate to="/portfolio" replace />;
@@ -133,6 +141,7 @@ export function AuthPage() {
                   <input
                     type="text"
                     required
+                    autoComplete="off"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -149,6 +158,7 @@ export function AuthPage() {
                 <input
                   type="email"
                   required
+                  autoComplete="off"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -165,6 +175,7 @@ export function AuthPage() {
                   type={showPassword ? 'text' : 'password'}
                   required
                   minLength={8}
+                  autoComplete="off"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-10 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
@@ -190,6 +201,7 @@ export function AuthPage() {
                     type={showPassword ? 'text' : 'password'}
                     required
                     minLength={8}
+                    autoComplete="off"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-10 pr-3 py-2.5 text-slate-100 focus:outline-none focus:border-indigo-500"
